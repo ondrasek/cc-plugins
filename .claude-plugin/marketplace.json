@@ -13,6 +13,11 @@
       "name": "dotnet-blueprint",
       "source": "./plugins/dotnet-blueprint",
       "description": "Intelligent .NET quality methodology plugin for Claude Code"
+    },
+    {
+      "name": "rust-blueprint",
+      "source": "./plugins/rust-blueprint",
+      "description": "Intelligent Rust quality methodology plugin for Claude Code"
     }
   ]
 }

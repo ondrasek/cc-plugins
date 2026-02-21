@@ -19,6 +19,11 @@ plugins/
     skills/                      — setup, audit, update, explain
     hooks/hooks.json             — Plugin-level hook registrations
     scripts/per-edit-fix.sh      — Plugin-level per-edit auto-fix
+  rust-blueprint/                — Rust quality methodology plugin
+    .claude-plugin/plugin.json   — Plugin manifest
+    skills/                      — setup, audit, update, explain
+    hooks/hooks.json             — Plugin-level hook registrations
+    scripts/per-edit-fix.sh      — Plugin-level per-edit auto-fix
 plans/                           — Development phase documentation
 ```
 
@@ -81,4 +86,21 @@ Each dimension defines a role. The setup skill researches and selects the best c
 - Templates use shell variables (`${SOLUTION_FILE}`, `${SOURCE_DIR}`, etc.) for customization
 - Config centralization via `Directory.Build.props` and `.editorconfig`
 - Roslyn analyzers preferred over external CLI tools (run during `dotnet build`)
+- Same hook architecture: fail-fast quality gate, per-edit auto-fix, session-start hygiene
+
+## rust-blueprint Plugin
+
+### Key files to understand
+
+- `plugins/rust-blueprint/skills/setup/methodology.md` — the intellectual core: 8 quality dimensions defined as roles, hook output format, fail-fast design (adapted for Rust)
+- `plugins/rust-blueprint/skills/setup/SKILL.md` — the setup workflow including reviewer subagent
+- `plugins/rust-blueprint/skills/setup/templates/` — structural references for generated configs
+
+### Rust-Specific Conventions
+
+- Same role-based methodology as python-blueprint, adapted for Rust ecosystem
+- Templates use shell variables (`${WORKSPACE_FLAG}`, `${MSRV}`, `${COVERAGE_THRESHOLD}`, etc.) for customization
+- Config via `Cargo.toml` `[lints]` section, `clippy.toml`, `rustfmt.toml`, `deny.toml`
+- clippy preferred as the single linter (covers style, correctness, performance, complexity)
+- WASM target detection and adaptation (wasm-pack, wasm-bindgen, wasm32-* targets)
 - Same hook architecture: fail-fast quality gate, per-edit auto-fix, session-start hygiene

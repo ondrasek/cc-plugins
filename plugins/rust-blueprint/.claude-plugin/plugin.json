@@ -1,0 +1,8 @@
+{
+  "name": "rust-blueprint",
+  "version": "0.1.0",
+  "description": "Intelligent Rust quality methodology plugin for Claude Code",
+  "author": {
+    "name": "ondrasek"
+  }
+}
