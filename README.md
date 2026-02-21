@@ -53,21 +53,15 @@ The plugin applies an 8-dimension quality methodology:
 
 The methodology adapts to your project — adjusting tool selection, thresholds, and configuration based on project type, size, maturity, and existing tooling.
 
-## Included Components
+## Plugin-Level Hooks
 
-Beyond the setup skill, the plugin provides:
-
-- **Agents** — git workflow, GitHub issues management, PR workflow
-- **Commands** — git operations, PR creation, PR review loop, issue lifecycle
-- **Hooks** — per-edit auto-fix (plugin-level)
+The plugin registers a per-edit auto-fix hook that runs on any project using the plugin. It auto-detects the package manager and runs ruff lint/format and codespell on every Python file edit.
 
 ## Project Structure
 
 ```
 .claude-plugin/plugin.json   — Plugin manifest
 skills/                      — Skill definitions and methodology
-agents/                      — Workflow agents
-commands/                    — Slash commands
 hooks/                       — Plugin-level hook registrations
 scripts/                     — Hook scripts
 plans/                       — Development phase documentation
@@ -81,9 +75,8 @@ This plugin is being built in phases. See `plans/` for detailed documentation:
 1. Plugin scaffold + CLAUDE.md
 2. Methodology document + templates
 3. Setup skill
-4. Port agents + commands
-5. Supporting skills (audit, update, explain)
-6. End-to-end testing + polish
+4. Supporting skills (audit, update, explain)
+5. End-to-end testing + polish
 
 ### Contributing
 

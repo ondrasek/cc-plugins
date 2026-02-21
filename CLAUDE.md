@@ -18,8 +18,6 @@ skills/
   audit/SKILL.md             — Gap analysis skill (Phase 5)
   update/SKILL.md            — Incremental update skill (Phase 5)
   explain/SKILL.md           — Methodology Q&A skill (Phase 5)
-agents/                      — Git, issue, PR workflow agents (Phase 4)
-commands/                    — Slash commands (Phase 4)
 hooks/                       — Plugin-level hook registrations (Phase 3)
 scripts/                     — Hook scripts (Phase 3)
 plans/                       — Phase plan documents
@@ -29,10 +27,9 @@ blueprint/                   — Original blueprint files (reference material)
 ## Development Status
 
 See `plans/` for detailed phase documentation:
-- Phase 1: Plugin scaffold + CLAUDE.md (current)
-- Phase 2: Methodology document + templates
-- Phase 3: Setup skill (`/python-blueprint:setup`)
-- Phase 4: Port agents + commands
+- Phase 1: Plugin scaffold + CLAUDE.md (complete)
+- Phase 2: Methodology document + templates (complete)
+- Phase 3: Setup skill (`/python-blueprint:setup`) (complete)
 - Phase 5: Supporting skills (audit, update, explain)
 - Phase 6: End-to-end testing + polish
 
