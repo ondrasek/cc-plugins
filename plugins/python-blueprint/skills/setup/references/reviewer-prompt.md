@@ -1,3 +1,9 @@
+---
+type: subagent-prompt
+used_by: setup
+description: Read-only configuration reviewer spawned during setup Phase 4. Not invoked independently.
+---
+
 # Reviewer Subagent Prompt
 
 Use the Task tool with `subagent_type: "general-purpose"` to spawn the reviewer. Adapt file paths to the target project.
