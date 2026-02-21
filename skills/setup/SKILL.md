@@ -1,6 +1,6 @@
 # /python-blueprint:setup
 
-Analyze a Python project and intelligently configure the quality methodology — hooks, CI, tool configs, and devcontainer.
+Analyze a Python project and intelligently configure the quality methodology — hooks, CI, and tool configs.
 
 ## Context Files
 
@@ -9,7 +9,7 @@ Read these files from the plugin before starting:
 - `skills/setup/methodology.md` — quality dimensions (roles), adaptation rules, hook architecture
 - `skills/setup/analysis-checklist.md` — what to check in the target codebase
 
-Templates are in `skills/setup/templates/` — use as structural references during the Configure phase, but select tools dynamically based on research.
+Templates in `skills/setup/templates/` are **annotated examples** — they demonstrate structural patterns (hook architecture, CI job layout, Makefile targets) using current tools as examples. During the Configure phase, use templates for the patterns but substitute the tools chosen during research.
 
 ## Workflow
 
@@ -84,23 +84,23 @@ Based on the analysis, determine what to configure. Apply adaptation rules from 
 
 ### Phase 3: Configure
 
-Apply the approved plan. Read templates from `skills/setup/templates/` and adapt them.
+Apply the approved plan. Templates in `skills/setup/templates/` are **annotated examples** — they demonstrate the structural patterns and architecture, but the specific tools shown are examples, not requirements. Use the templates as starting points and substitute the tools chosen during research.
 
 **Steps**:
 
-1. **Merge tool configs into pyproject.toml** — Read `templates/pyproject-tools.toml`, substitute variables, merge into existing `pyproject.toml`. Preserve existing config, only add new sections.
+1. **Merge tool configs into pyproject.toml** — Read `templates/pyproject-tools.toml` for structure reference. Generate `[tool.*]` sections for the actual researched tools (not necessarily the ones in the template). Substitute variables, merge into existing `pyproject.toml`. Preserve existing config, only add new sections.
 
-2. **Create hook scripts** — Read each template (`quality-gate.sh`, `per-edit-fix.sh`, `auto-commit.sh`, `session-start.sh`), substitute variables, remove disabled check sections, write to `.claude/hooks/`. Make executable.
+2. **Create hook scripts** — Read each template (`quality-gate.sh`, `per-edit-fix.sh`, `auto-commit.sh`, `session-start.sh`) for the patterns (run_check/fail mechanism, hint format, exit codes). Substitute the researched tool commands, write tool-specific hints, remove disabled check sections, write to `.claude/hooks/`. Make executable.
 
 3. **Create/update settings.json** — Read `templates/settings.json`, customize hook paths and timeouts, merge into existing `.claude/settings.json`.
 
-4. **Create/update CI pipeline** — Read `templates/ci.yml`, substitute variables, remove/add jobs based on enabled dimensions. If CI exists, merge jobs into existing pipeline.
+4. **Create/update CI pipeline** — Read `templates/ci.yml` for job structure. Substitute researched tool commands, remove/add jobs based on enabled dimensions. If CI exists, merge jobs into existing pipeline.
 
-5. **Create Makefile** — Read `templates/Makefile`, substitute variables. If Makefile exists, merge targets.
+5. **Create Makefile** — Read `templates/Makefile` for target naming conventions. Substitute researched tool commands. If Makefile exists, merge targets.
 
-6. **Create pyrightconfig.json** — Read `templates/pyrightconfig.json`, substitute variables.
+6. **Create type checker config** — Only if the chosen type checker requires a standalone config file (e.g., `pyrightconfig.json` for pyright). Type checkers that configure via `pyproject.toml` don't need this.
 
-7. **Create .pre-commit-config.yaml** — Read `templates/pre-commit-config.yaml`. If one exists, merge hooks.
+7. **Create .pre-commit-config.yaml** — Add pre-commit hooks for the chosen linter/formatter. If one exists, merge hooks.
 
 8. **Create/update CLAUDE.md** — If no CLAUDE.md exists, create from `templates/CLAUDE.md`. If one exists, append methodology reference section.
 

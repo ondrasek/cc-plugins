@@ -1,6 +1,7 @@
 #!/bin/bash
 # Style guide check for CLI output formatting.
-# Only applies to projects using click for CLI output.
+# Only applies to projects using click/typer for CLI output.
+# This is OPTIONAL — only enabled when a CLI framework is detected.
 #
 # Rules:
 #   1. No ASCII art splitter lines (===, ---, ***) in click.echo/print calls

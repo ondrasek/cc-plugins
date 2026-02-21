@@ -1,6 +1,13 @@
 # Tool configuration template for pyproject.toml
 # The setup skill merges relevant sections into the target project's pyproject.toml.
 #
+# THIS IS AN ANNOTATED EXAMPLE. The specific tools and their [tool.*] sections
+# below are current best-in-class choices. The setup skill should:
+#   1. Research current tools for each role
+#   2. Generate [tool.*] sections for the CHOSEN tools (not necessarily these)
+#   3. Use this template as a structural reference for config patterns
+# The dev dependency list and tool sections should reflect actual researched choices.
+#
 # TEMPLATE VARIABLES:
 #   ${PYTHON_VERSION}       — e.g., "3.13"
 #   ${PYTHON_VERSION_PY}    — e.g., "py313" (for ruff target-version)

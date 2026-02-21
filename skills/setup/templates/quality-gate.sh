@@ -3,6 +3,16 @@
 # Fail-fast: stops at the first failing check, outputs its full stderr/stdout.
 # Exit 2 feeds stderr to Claude for automatic fixing.
 #
+# THIS IS AN ANNOTATED EXAMPLE. The specific tools below (ruff, pyright, mypy,
+# bandit, vulture, xenon, etc.) are current best-in-class choices as of 2025.
+# The setup skill should research and substitute the best tools for each ROLE
+# based on the project's ecosystem. What matters is the PATTERN:
+#   - run_check / run_check_nonempty functions
+#   - fail() output format (check name, command, tool output, hint, action directive)
+#   - Fail-fast: exit 2 on first failure, one error at a time
+#   - TOOL_HINTS: per-tool diagnostic hints that tell Claude how to fix
+#   - Check ordering: fastest/most-likely-to-fail first
+#
 # TEMPLATE VARIABLES (replaced by setup skill):
 #   ${PACKAGE_MANAGER_RUN}  — command prefix (e.g., "uv run --no-sync", "poetry run")
 #   ${SOURCE_DIR}           — source directory (e.g., "src/", "mypackage/")
@@ -13,7 +23,7 @@
 #   ${COMPLEXITY_GRADE}     — max absolute complexity grade (e.g., "B")
 #   ${VULTURE_CONFIDENCE}   — min confidence for dead code (e.g., 80)
 #
-# ENABLED CHECKS (setup skill removes disabled ones):
+# ENABLED CHECKS (setup skill removes disabled ones and adds researched tools):
 #   Each check is guarded by a comment marker for easy removal.
 
 set -o pipefail
@@ -25,6 +35,9 @@ debuglog() {
 debuglog "=== HOOK STARTED (pid=$$) ==="
 
 # Per-tool diagnostic hints for Claude auto-fix.
+# EXAMPLE HINTS: These are for the tools shown below. When substituting
+# different tools, write hints that are SPECIFIC to that tool — tell Claude
+# which file to read, how to re-check a single file, and what to fix.
 declare -A TOOL_HINTS
 TOOL_HINTS=(
     [pytest]="Read the failing test file and the source it tests. Run '${PACKAGE_MANAGER_RUN} pytest path/to/test_file.py::TestClass::test_name -x --tb=long' to see the full traceback. Fix the source code, not the test, unless the test itself is wrong."
@@ -84,6 +97,8 @@ run_check_nonempty() {
 ${PACKAGE_MANAGER_SYNC}
 
 # Checks ordered by speed and likelihood of failure.
+# EXAMPLE CHECKS: Replace tool commands with researched alternatives.
+# Keep the run_check/run_check_nonempty pattern and [check:*] markers.
 # [check:pytest]
 run_check        "pytest"         ${PACKAGE_MANAGER_RUN} pytest -x --tb=short
 # [check:coverage]

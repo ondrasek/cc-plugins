@@ -3,6 +3,14 @@
 # Runs once when a Claude Code session begins
 # Non-blocking — reports issues but doesn't prevent session start
 #
+# THIS IS AN ANNOTATED EXAMPLE. The specific tool (deptry) is a current
+# choice for the Architecture & Import Discipline role (dependency hygiene).
+# The setup skill should substitute the best dependency checker for the
+# project's ecosystem. What matters is the PATTERN:
+#   - Run non-blocking checks (exit 0 always)
+#   - Collect warnings and report to stderr
+#   - Keep it fast (runs on every session start)
+#
 # TEMPLATE VARIABLES:
 #   ${PACKAGE_MANAGER_RUN}  — command prefix (e.g., "uv run", "poetry run")
 

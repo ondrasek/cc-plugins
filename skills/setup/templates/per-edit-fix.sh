@@ -4,6 +4,14 @@
 # Exit 0 = success (fixes applied silently)
 # Exit 2 = unfixable issues fed back to Claude
 #
+# THIS IS AN ANNOTATED EXAMPLE. The specific tools (ruff, codespell) are
+# current choices for the Linting & Formatting role. The setup skill should
+# substitute the best auto-fixable linter, formatter, and spell checker for
+# the project's ecosystem. What matters is the PATTERN:
+#   - Detect Python file from tool input JSON
+#   - Run auto-fixers silently (exit 0 if all fixed)
+#   - Report unfixable issues to stderr (exit 2)
+#
 # TEMPLATE VARIABLES:
 #   ${PACKAGE_MANAGER_RUN}  — command prefix (e.g., "uv run", "poetry run")
 
