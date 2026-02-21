@@ -1,8 +1,14 @@
-# /python-blueprint:audit
+---
+name: audit
+description: Read-only gap analysis comparing a Python project's current quality setup against the 8-dimension methodology. Use when user says "audit quality", "check coverage gaps", "what's missing", or wants to see how their project measures up before running setup.
+metadata:
+  version: 0.1.0
+  author: ondrasek
+---
 
-Analyze a Python project's current quality configuration and report gaps against the methodology.
+# Audit
 
-**This skill is read-only — it does not modify any files.**
+Read-only — does not modify any files.
 
 ## Context Files
 
@@ -24,33 +30,33 @@ Follow the same analysis steps as the setup skill (Phase 1 of `skills/setup/SKIL
 
 ### 2. Compare Against Methodology
 
-For each of the 8 quality dimensions from `methodology.md`:
+For each of the 8 quality dimensions from `methodology.md`, check whether the role is filled by any tool:
 
-1. **Testing & Coverage** — Is pytest configured? Is coverage measured? What's the threshold?
-2. **Linting & Formatting** — Is ruff configured? Which rule sets? Is formatting enforced?
-3. **Type Safety** — Is pyright/mypy/ty configured? What mode?
-4. **Security Analysis** — Is bandit/semgrep configured?
-5. **Code Complexity** — Is xenon configured? What thresholds?
-6. **Dead Code & Modernization** — Is vulture/refurb configured?
-7. **Documentation** — Is interrogate configured? What threshold?
-8. **Architecture** — Is import-linter/deptry configured?
+1. **Testing & Coverage** — Is there a test runner? Is coverage measured? What's the threshold?
+2. **Linting & Formatting** — Is there a linter? A formatter? Is auto-fix configured?
+3. **Type Safety** — Is there a static type checker? What strictness mode?
+4. **Security Analysis** — Is there a security scanner? Framework-specific rules?
+5. **Code Complexity** — Is there a complexity checker? What thresholds?
+6. **Dead Code & Modernization** — Is there dead code detection? Modernization checking?
+7. **Documentation** — Is there docstring coverage enforcement? What threshold?
+8. **Architecture** — Is there circular import detection? Import contract enforcement? Dependency hygiene?
 
 ### 3. Check Hook Coverage
 
-Verify Claude Code hooks are configured:
-- SessionStart → dependency hygiene (deptry)
-- PostToolUse (Edit|Write) → per-edit auto-fix (ruff, codespell)
-- Stop → quality gate (all checks)
+Verify Claude Code hooks are configured for each hook event from `methodology.md`:
+- SessionStart → dependency hygiene check (non-blocking)
+- PostToolUse (Edit|Write) → per-edit auto-fix (lint, format, spelling)
+- Stop → quality gate (all enabled dimensions)
 - Stop → auto-commit (optional)
 
 ### 4. Check CI Coverage
 
-Verify CI pipeline covers at minimum:
-- test job (pytest + coverage)
-- lint job (ruff)
-- typecheck job (pyright)
-- security job (bandit)
-- deadcode job (vulture)
+Verify CI pipeline has a job for each enabled dimension:
+- test (runner + coverage)
+- lint (linter + formatter)
+- typecheck (type checker)
+- security (security scanner)
+- deadcode (dead code detector)
 
 ### 5. Report
 
@@ -86,14 +92,15 @@ Present findings in a structured format:
 
 ### Recommendations
 1. Run `/python-blueprint:setup` to configure missing dimensions
-2. Add mypy and ty for comprehensive type safety
-3. Raise ruff rule coverage (add UP, SIM)
+2. Consider adding a second type checker for broader coverage
+3. Expand linter rule sets for more comprehensive checking
 4. Consider raising coverage threshold from 65% to 80%
 ```
 
 ## Important Notes
 
 - This skill only reads and reports — it never modifies files
-- Compare against methodology defaults but note where project-specific thresholds may be appropriate
-- Flag deprecated tools (e.g., black instead of ruff format, flake8 instead of ruff)
+- Compare against methodology roles, not specific tools — any tool filling the role counts
+- Note where project-specific thresholds may be appropriate
+- Flag outdated tools that have been superseded by better alternatives
 - Report both missing dimensions and misconfigured existing tools
