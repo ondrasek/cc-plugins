@@ -1,8 +1,8 @@
 # Python Quality Methodology
 
-This document defines the quality methodology applied by the `python-blueprint` plugin. It is organized into 8 quality dimensions, each with tools, rationale, default configuration, and adaptation rules.
+This document defines the quality methodology applied by the `python-blueprint` plugin. It is organized into 8 quality dimensions, each defining a **role** (what needs to happen) rather than prescribing specific tools.
 
-The setup skill reads this document to understand what to apply and how to adapt it.
+The setup skill reads this document to understand what to apply, then researches current best-in-class tools to fill each role.
 
 ---
 
@@ -11,193 +11,183 @@ The setup skill reads this document to understand what to apply and how to adapt
 1. **Fail fast, fix fast** — Quality checks run as Claude Code hooks. Failures block the agent and feed back for automatic fixing (exit code 2).
 2. **Ordered by speed** — Checks run fastest-first so common failures surface quickly.
 3. **Opinionated defaults, flexible adaptation** — Defaults reflect production-grade standards. Every dimension can be relaxed for early-stage, prototype, or legacy projects.
-4. **Tools are replaceable** — The methodology defines *what* to check, not *which tool*. See `tool-catalog.md` for alternatives.
+4. **Roles, not tools** — The methodology defines *what* to check, not *which tool*. The setup skill researches current tools to fill each role, considering the project's ecosystem and Python version.
 5. **Incremental adoption** — Projects can adopt dimensions one at a time. The audit skill tracks which dimensions are active.
 
 ---
 
 ## Dimension 1: Testing & Coverage
 
-**What**: Every code change must be backed by tests. Coverage ensures untested code paths are visible.
+**Role**: Verify that code changes are backed by tests. Measure and enforce test coverage thresholds.
 
-**Default tools**: pytest, pytest-cov
+**What the tool must do**:
+- Discover and run test files
+- Stop on first failure (fail-fast mode)
+- Measure line coverage against a threshold
+- Report uncovered lines
 
-**Default configuration**:
-- `pytest -x --tb=short` (fail fast, concise output)
-- `--cov=src/ --cov-fail-under=80` (80% minimum coverage)
-- Test paths: `tests/`
+**Default thresholds**:
+- Minimum coverage: 80%
+- Test directory: `tests/`
 
-**Adaptation rules**:
-- **New project (< 500 LOC)**: Lower threshold to 60%, focus on happy-path tests
-- **Legacy project**: Start with 40% threshold, increase 5% per sprint
-- **Library**: Require 90%+ coverage for public API
-- **CLI app**: Exclude integration tests from coverage minimum; test commands separately
-- **Django/Flask**: Include framework-specific test utilities (e.g., `pytest-django`)
+**Adaptation**:
+- New project (< 500 LOC): 60%
+- Library with public API: 90%
+- Legacy project adopting methodology: start at current coverage, increase incrementally
 
-**Quality gate check**: `uv run pytest -x --tb=short` then `uv run pytest --cov=src/ --cov-report=term --cov-fail-under=80 -q`
+**Quality gate**: Run tests (fail-fast), then run coverage check against threshold.
 
-**CI job**: `test` — runs pytest with coverage, uploads to Codecov on PRs
+**CI job**: `test` — run tests with coverage, upload report on PRs.
 
 ---
 
 ## Dimension 2: Linting & Formatting
 
-**What**: Consistent code style and automated detection of common bugs, anti-patterns, and import issues.
+**Role**: Enforce consistent code style. Auto-detect and fix common bugs, anti-patterns, and import ordering. Catch typos.
 
-**Default tools**: ruff (lint + format), codespell
+**What the tools must do**:
+- Lint: check for style errors, unused imports, undefined names, import ordering, deprecated patterns, common bugs
+- Format: enforce consistent whitespace, quotes, line length
+- Spell check: catch typos in identifiers, strings, comments (auto-fixable)
 
 **Default configuration**:
-- Target: Python 3.13
 - Line length: 100
-- Lint rules: E, W, F, I, UP, B, SIM (pycodestyle, pyflakes, isort, pyupgrade, bugbear, simplify)
-- Format: double quotes
-- Codespell: skip `.venv,*.pyc,__pycache__,.git`
+- Target: project's minimum Python version
+- Auto-fix on every file edit (per-edit hook)
 
-**Adaptation rules**:
-- **Python version < 3.13**: Set `target-version` to match project's minimum Python
-- **Existing formatter (black)**: Migrate to ruff format (drop-in compatible) or keep black if team prefers
-- **Large codebase**: Start with `E,F,I` rules, add `UP,B,SIM` incrementally
-- **Monorepo**: Configure per-package `ruff.toml` or `pyproject.toml` sections
+**Quality gate**: Lint check + format check on source and test directories.
 
-**Quality gate checks**: `uv run ruff check src/ tests/` then `uv run ruff format --check src/ tests/`
+**Per-edit hook**: Auto-fix lint, format, and spelling on every Python file edit. Report unfixable issues back to Claude (exit 2).
 
-**Per-edit hook**: Auto-fix with `ruff check --fix --quiet` and `ruff format --quiet` on every Python file edit. Also runs `codespell --write-changes` for typo correction.
-
-**CI job**: `lint` — ruff check + format check
+**CI job**: `lint` — lint check + format check.
 
 ---
 
 ## Dimension 3: Type Safety
 
-**What**: Static type analysis catches type errors before runtime. Two complementary checkers provide broader coverage.
+**Role**: Static type analysis to catch type errors before runtime.
 
-**Default tools**: pyright, mypy, ty
+**What the tools must do**:
+- Analyze type annotations and infer types
+- Report type mismatches, missing annotations, incompatible assignments
+- Support gradual typing (can work with partially-typed codebases)
 
 **Default configuration**:
-- Pyright: `standard` mode, include `src/`, Python 3.13
-- Mypy: `strict = true`, `warn_return_any = true`, `warn_unused_ignores = true`, relaxed for `tests.*`
-- ty: Python 3.13, exclude tests and `__pycache__`
+- Standard/strict mode for annotated code
+- Relaxed checking for test files
 
-**Adaptation rules**:
-- **Untyped codebase**: Start with pyright in `basic` mode only; skip mypy until annotations exist
-- **Gradual typing**: Use mypy `--follow-imports=silent` to type-check only annotated modules
-- **Django**: Add `django-stubs` and configure mypy `plugins = ["mypy_django_plugin.main"]`
-- **FastAPI/Pydantic**: Pyright handles Pydantic well; add `pydantic` mypy plugin if using mypy
-- **Python < 3.10**: Drop ty (requires modern Python); pyright + mypy sufficient
+**Adaptation**:
+- Untyped codebase: start with basic mode, skip strict checking
+- Gradual typing: check only annotated modules
+- Framework-specific: add type stubs for Django, Pydantic, etc.
 
-**Quality gate checks**: `uv run pyright src/` then `uv run mypy src/` then `uv run ty check src/`
+**Quality gate**: Run type checker(s) on source directory.
 
-**CI job**: `typecheck` — runs pyright
+**CI job**: `typecheck` — run primary type checker.
 
 ---
 
 ## Dimension 4: Security Analysis
 
-**What**: Static analysis for known vulnerability patterns, unsafe API usage, and security anti-patterns.
+**Role**: Static analysis for known vulnerability patterns, unsafe API usage, and security anti-patterns.
 
-**Default tools**: bandit, semgrep
+**What the tools must do**:
+- Detect hardcoded secrets, shell injection, insecure crypto
+- Match code against known vulnerability patterns
+- Support framework-specific security rules (Django, Flask, etc.)
 
-**Default configuration**:
-- Bandit: exclude `tests`, `.venv`; skip `B101` (assert); severity `-ll` (low and above)
-- Semgrep: `p/python` ruleset, error mode, quiet output
+**Adaptation**:
+- Web apps: add framework-specific rulesets
+- Libraries (no I/O): lighter security checking
+- Slow scanners: consider CI-only for large codebases
 
-**Adaptation rules**:
-- **Library (no I/O)**: Relax bandit severity to `-lll` (medium+ only)
-- **Web app (Django/Flask/FastAPI)**: Add semgrep rulesets: `p/django`, `p/flask`, `p/owasp-top-ten`
-- **Data science**: Skip semgrep (too noisy on notebooks); bandit only
-- **CI-only semgrep**: Semgrep is slow; consider running only in CI, not in quality gate
+**Quality gate**: Run security scanner(s) on source directory.
 
-**Quality gate checks**: `uv run bandit -r src/ -q -ll` then `uv run semgrep scan --config p/python --error --quiet src/`
-
-**CI job**: `security` — runs bandit
+**CI job**: `security` — run primary security scanner.
 
 ---
 
 ## Dimension 5: Code Complexity
 
-**What**: Functions exceeding cyclomatic complexity thresholds are hard to test, review, and maintain. Enforce measurable complexity limits.
+**Role**: Enforce measurable cyclomatic complexity limits to keep functions testable and maintainable.
 
-**Default tool**: xenon
+**What the tool must do**:
+- Measure cyclomatic complexity per function, per module, and project-wide
+- Fail when functions exceed threshold
+- Report which functions are too complex
 
-**Default configuration**:
-- Max absolute: B (no function above CC 10)
-- Max modules: A (module averages in 1–5 range)
-- Max average: A (project-wide average in 1–5 range)
-- Thresholds follow McCabe/NIST production standards
+**Default thresholds**:
+- No function above CC 10 (grade B)
+- Module averages in CC 1–5 range (grade A)
+- Project-wide average in CC 1–5 range (grade A)
 
-**Adaptation rules**:
-- **Early-stage project**: Accept C absolute (CC ≤ 15) temporarily
-- **Legacy codebase**: Start at D absolute, tighten one grade per quarter
-- **Data processing / ETL**: May legitimately have complex functions; consider per-module exceptions
-- **Generated code**: Exclude from complexity checks
+**Adaptation**:
+- Early-stage project: accept CC ≤ 15 temporarily
+- Legacy codebase: start at current max, tighten over time
 
-**Quality gate check**: `uv run xenon --max-absolute B --max-modules A --max-average A src/`
+**Quality gate**: Run complexity checker on source directory.
 
 ---
 
 ## Dimension 6: Dead Code & Modernization
 
-**What**: Remove unused code and adopt modern Python idioms. Keeps the codebase lean and current.
+**Role**: Detect unused code and suggest modern Python idioms.
 
-**Default tools**: vulture, refurb
+**What the tools must do**:
+- Dead code: find unused functions, variables, imports, classes
+- Modernization: suggest idiomatic replacements for outdated patterns
 
 **Default configuration**:
-- Vulture: `--min-confidence 80` on `src/`
-- Refurb: `--python-version 3.13` on `src/`
+- Dead code confidence: 80% (trade-off between false positives and coverage)
+- Modernization: target project's Python version
 
-**Adaptation rules**:
-- **Library with public API**: Lower vulture confidence to 90% or maintain a whitelist for public symbols
-- **Plugin architecture**: Vulture may flag dynamically-loaded code; use whitelist
-- **Python < 3.13**: Set refurb `--python-version` to match minimum supported version
-- **Large legacy codebase**: Start vulture at confidence 95, lower gradually
+**Adaptation**:
+- Library with public API: raise confidence threshold to reduce false positives on exported symbols, or maintain a whitelist
+- Plugin/dynamic architecture: whitelist dynamically-loaded code
 
-**Quality gate checks**: `uv run vulture src/ --min-confidence 80` (nonempty output = fail) then `uv run refurb src/ --python-version 3.13` (nonempty output = fail)
+**Quality gate**: Run dead code detector + modernizer on source directory (nonempty output = fail).
 
-**CI job**: `deadcode` — runs vulture
+**CI job**: `deadcode` — run dead code detector.
 
 ---
 
 ## Dimension 7: Documentation
 
-**What**: Public functions, classes, and modules should have docstrings. Enforced by coverage measurement, not style.
+**Role**: Enforce docstring coverage on public functions, classes, and modules.
 
-**Default tool**: interrogate
+**What the tool must do**:
+- Measure docstring coverage percentage
+- Exclude test files, private/magic methods, `__init__`
+- Fail when coverage drops below threshold
 
-**Default configuration**:
-- Fail-under: 70%
-- Exclude: tests, docs
-- Ignore: `__init__` methods/modules, magic methods, semiprivate, private
+**Default thresholds**:
+- Minimum docstring coverage: 70%
 
-**Adaptation rules**:
-- **Early-stage / prototype**: Lower to 50%
-- **Library**: Raise to 90% — consumers depend on docstrings
-- **Internal tool**: 60% is acceptable
-- **Data science**: Exclude generated or notebook-converted code
+**Adaptation**:
+- Library: raise to 90% (consumers depend on docstrings)
+- Early-stage / prototype: lower to 50%
+- Internal tool: 60%
 
-**Quality gate check**: `uv run interrogate src/ -v --fail-under 70 -e tests/`
+**Quality gate**: Run docstring coverage checker on source directory.
 
 ---
 
 ## Dimension 8: Architecture & Import Discipline
 
-**What**: Enforce import boundaries between modules and detect dependency hygiene issues (unused, missing, or transitive dependencies).
+**Role**: Enforce import boundaries between modules. Detect dependency hygiene issues.
 
-**Default tools**: import-linter, deptry
+**What the tools must do**:
+- Import linting: enforce contracts (forbidden imports, layer dependencies)
+- Dependency hygiene: detect unused, missing, or transitive dependencies in `pyproject.toml`
 
-**Default configuration**:
-- Import-linter: `root_packages = ["your_package"]` with custom contracts
-- Deptry: `ignore = ["DEP003"]` (self-imports)
+**Adaptation**:
+- Single-module project: skip import linting (nothing to enforce)
+- New project: start with dependency hygiene only; add import contracts when architecture emerges
+- Django: configure layer contracts (views → services → models)
 
-**Adaptation rules**:
-- **Single-module project**: Skip import-linter (nothing to enforce)
-- **Monorepo**: Configure import contracts per package
-- **Django**: Configure layer contracts: views → services → models (no reverse)
-- **New project**: Start with deptry only; add import-linter when architecture emerges
-- **Session-only**: Deptry runs in session-start hook (non-blocking warnings), not in quality gate
+**Quality gate**: Run import linter.
 
-**Quality gate check**: `uv run lint-imports`
-
-**Session start hook**: `uv run deptry .` (non-blocking)
+**Session start hook**: Run dependency hygiene check (non-blocking warnings).
 
 ---
 
@@ -207,20 +197,110 @@ The methodology uses four hook types:
 
 | Hook Event | Script | Behavior | Blocking |
 |-----------|--------|----------|----------|
-| **SessionStart** | `session-start.sh` | Dependency hygiene (deptry) | No (warnings only) |
+| **SessionStart** | `session-start.sh` | Dependency hygiene check | No (warnings only) |
 | **PostToolUse** (Edit\|Write) | `per-edit-fix.sh` | Auto-fix lint, format, spelling on each Python file edit | Yes (exit 2 for unfixable) |
-| **Stop** | `quality-gate.sh` | Full 15-check quality gate | Yes (exit 2 → Claude fixes) |
+| **Stop** | `quality-gate.sh` | Full quality gate (all enabled dimensions) | Yes (exit 2 → Claude fixes) |
 | **Stop** | `auto-commit.sh` | Auto-commit and push if quality gate passes | No (push failure is non-blocking) |
 
-**Key design**: The quality gate exits with code 2 on failure, which feeds stderr back to Claude for automatic fixing. The agent loops until all checks pass or it gives up.
+### Fail-Fast Design
+
+The quality gate runs checks **sequentially and stops at the first failure**. It does NOT collect all errors and report them at once. This is intentional:
+
+- Claude fixes one issue at a time, then the gate re-runs
+- Prevents "lost in the middle" — a long list of errors causes Claude to skip or half-fix items
+- Each re-run confirms the previous fix didn't introduce new issues
+- Faster feedback: common failures (tests, lint) are checked first
+
+### Hook Output as Prompt
+
+Hook stderr is fed directly to Claude as a prompt. The output must be structured to work well as an instruction, not just as a log message. Every failure output has three parts:
+
+1. **What failed** — the check name and command that was run
+2. **Tool output** — the raw error from the tool (file paths, line numbers, error codes)
+3. **Diagnostic hint** — a specific instruction telling Claude how to investigate and fix this type of failure
+
+The output ends with an **action directive** that tells Claude to fix the issue immediately rather than explain or stop.
+
+### Output Examples
+
+**Good** — a quality gate failure for a type checker:
+```
+QUALITY GATE FAILED [pyright]:
+Command: uv run pyright src/
+
+src/mypackage/api.py:42:12 - error: Argument of type "str | None" cannot be
+  assigned to parameter "name" of type "str" in function "create_user"
+    "str | None" is not assignable to "str" (reportGeneralClassErrors)
+
+Hint: Read the file at the reported line number. Check type annotations,
+imports, and function signatures. Run 'uv run pyright src/mypackage/api.py'
+to re-check a single file after fixing.
+
+ACTION REQUIRED: You MUST fix the issue shown above. Do NOT stop or
+explain — read the failing file, edit the source code to resolve it,
+and the quality gate will re-run automatically.
+```
+
+**Good** — a per-edit hook reporting an unfixable lint issue:
+```
+Per-edit check found issues in src/mypackage/utils.py:
+LINT (ruff):
+src/mypackage/utils.py:15:1: F811 Redefinition of unused `parse_config`
+  from line 8
+```
+
+**Bad** — a wall of text with multiple failures (do NOT do this):
+```
+ERROR: 47 issues found
+src/a.py:1: E302 expected 2 blank lines
+src/a.py:5: F401 unused import
+src/b.py:12: E501 line too long
+src/b.py:15: F401 unused import
+... (43 more lines)
+```
+
+### Exit Code Convention
+
+| Exit Code | Meaning | Claude Behavior |
+|-----------|---------|-----------------|
+| 0 | All checks passed | Claude proceeds normally |
+| 1 | Error (script bug, tool not found) | Claude sees error but is not forced to fix |
+| 2 | Check failed — stderr is a fix instruction | Claude reads stderr and must fix the issue, then the hook re-runs |
+
+Exit code 2 is the key mechanism. It turns the hook into a feedback loop: fail → Claude fixes → hook re-runs → repeat until clean.
+
+### Hint Writing Guidelines
+
+Each tool check should have a diagnostic hint. Good hints:
+
+- Tell Claude **which file to read** (use the paths from the tool output)
+- Tell Claude **how to re-check** a single file after fixing (avoids re-running the full gate)
+- Tell Claude **what to fix** (edit source code, not the test, unless the test is wrong)
+- Are **specific to the tool** (not generic "fix the error" advice)
+
+Example hints:
+```
+[pytest]    "Read the failing test file and the source it tests. Run
+             'uv run pytest path/to/test.py::test_name -x --tb=long'
+             to see the full traceback. Fix the source code, not the
+             test, unless the test itself is wrong."
+
+[ruff]      "Run 'uv run ruff check src/ --output-format=full' for
+             detailed explanations. Most issues are auto-fixable with
+             'uv run ruff check --fix'."
+
+[xenon]     "The reported function has cyclomatic complexity above the
+             threshold. Read the function and extract helper functions
+             to reduce branching."
+```
 
 ---
 
 ## Pre-commit Hooks
 
 Separate from Claude Code hooks, `pre-commit` runs on `git commit`:
-- `ruff` — lint check
-- `ruff-format` — format check
+- Lint check
+- Format check
 
 These catch issues in manual commits that bypass the Claude Code workflow.
 
@@ -230,23 +310,38 @@ These catch issues in manual commits that bypass the Claude Code workflow.
 
 The CI pipeline runs a subset of the quality gate as parallel jobs:
 
-| Job | Checks | Purpose |
-|-----|--------|---------|
-| `test` | pytest + coverage + Codecov | Verify behavior |
-| `lint` | ruff check + ruff format | Verify style |
-| `typecheck` | pyright | Verify types |
-| `security` | bandit | Verify safety |
-| `deadcode` | vulture | Verify no dead code |
+| Job | Dimension | Purpose |
+|-----|-----------|---------|
+| `test` | Testing & Coverage | Verify behavior, upload coverage |
+| `lint` | Linting & Formatting | Verify style |
+| `typecheck` | Type Safety | Verify types |
+| `security` | Security Analysis | Verify safety |
+| `deadcode` | Dead Code | Verify no dead code |
 
 Jobs run on `push` to main and on pull requests to main.
 
 ---
 
+## Tool Research
+
+When the setup skill fills each role, it should:
+
+1. **Check what the project already uses** — respect existing tool choices
+2. **Research current best tools** (via WebSearch) for any unfilled roles, considering:
+   - Compatibility with the project's Python version
+   - Framework-specific support needed
+   - Community adoption and maintenance status
+   - Speed (quality gate runs on every stop, so tools must be fast)
+   - Configuration via `pyproject.toml` (preferred over standalone config files)
+3. **Present tool choices to the user** with rationale before configuring
+
+---
+
 ## Style Guide (CLI Projects)
 
-For projects using `click` for CLI output:
+For projects using CLI frameworks (click, typer, etc.):
 1. **No ASCII splitter lines** — no `===`, `---`, `***` in echo/print calls
-2. **Section headings** — use `click.style(ALL CAPS text, fg=COLOR, bold=True)`
+2. **Section headings** — use styled, bold, colored output
 3. **Emoji prefixes** — section headings should include an emoji
 
-This is enforced by a separate `style-guide-check.sh` in the quality gate. Only applies to projects with click-based CLIs.
+This is an optional check, only enabled when a CLI framework is detected.

@@ -6,11 +6,10 @@ Analyze a Python project and intelligently configure the quality methodology —
 
 Read these files from the plugin before starting:
 
-- `skills/setup/methodology.md` — quality dimensions and adaptation rules
-- `skills/setup/tool-catalog.md` — tool descriptions, configs, alternatives
+- `skills/setup/methodology.md` — quality dimensions (roles), adaptation rules, hook architecture
 - `skills/setup/analysis-checklist.md` — what to check in the target codebase
 
-Templates are in `skills/setup/templates/` — read them as needed during the Configure phase.
+Templates are in `skills/setup/templates/` — use as structural references during the Configure phase, but select tools dynamically based on research.
 
 ## Workflow
 
@@ -57,10 +56,12 @@ Based on the analysis, determine what to configure. Apply adaptation rules from 
 
 **Steps**:
 
-1. **Select tools** — For each of the 8 quality dimensions, determine:
-   - Which tool to use (default or alternative based on ecosystem)
-   - Configuration adjustments needed (Python version, paths, thresholds)
-   - Whether to enable or skip this dimension (with rationale)
+1. **Research and select tools** — For each of the 8 quality dimensions:
+   - Check if the project already uses a tool for this role (keep it if so)
+   - For unfilled roles, use WebSearch to research current best-in-class Python tools
+   - Consider: Python version compatibility, framework support, speed, community adoption, pyproject.toml support
+   - Determine configuration adjustments needed (Python version, paths, thresholds)
+   - Decide whether to enable or skip this dimension (with rationale)
 
 2. **Determine thresholds** — Based on project maturity:
    - Coverage threshold (40–90%)

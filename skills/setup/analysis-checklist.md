@@ -107,8 +107,6 @@ This checklist defines what the setup skill must analyze in a target codebase be
 **Check for**:
 - [ ] `.claude/settings.json` — existing hooks, permissions, statusline
 - [ ] `.claude/hooks/` — existing hook scripts
-- [ ] `.claude/agents/` — existing agents
-- [ ] `.claude/commands/` — existing commands
 - [ ] `CLAUDE.md` — existing project instructions
 
 **Impact**: Merge hooks into existing settings.json. Don't overwrite existing CLAUDE.md — append methodology reference.

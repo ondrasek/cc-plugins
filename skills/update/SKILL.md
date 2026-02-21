@@ -7,7 +7,6 @@ Apply incremental methodology updates to a project that was previously configure
 Read these files from the plugin before starting:
 
 - `skills/setup/methodology.md` — current methodology (latest version)
-- `skills/setup/tool-catalog.md` — current tool recommendations
 - `skills/setup/templates/` — current templates
 
 ## Workflow

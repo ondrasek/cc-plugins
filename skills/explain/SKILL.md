@@ -8,8 +8,7 @@ Answer questions about the Python quality methodology — why specific tools are
 
 Read these files from the plugin to answer questions:
 
-- `skills/setup/methodology.md` — quality dimensions, rationale, adaptation rules
-- `skills/setup/tool-catalog.md` — tool descriptions, alternatives, configuration details
+- `skills/setup/methodology.md` — quality dimensions (roles), rationale, adaptation rules
 - `skills/setup/analysis-checklist.md` — how projects are analyzed
 
 ## Behavior

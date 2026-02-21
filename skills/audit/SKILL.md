@@ -8,8 +8,7 @@ Analyze a Python project's current quality configuration and report gaps against
 
 Read these files from the plugin before starting:
 
-- `skills/setup/methodology.md` — the 8 quality dimensions to audit against
-- `skills/setup/tool-catalog.md` — expected tool configurations
+- `skills/setup/methodology.md` — the 8 quality dimensions (roles) to audit against
 - `skills/setup/analysis-checklist.md` — what to check in the target codebase
 
 ## Workflow
