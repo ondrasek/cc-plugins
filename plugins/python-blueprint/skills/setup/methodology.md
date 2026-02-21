@@ -374,7 +374,7 @@ These checks target the Claude Code development environment itself — project i
 **Why this matters**: Boris Cherny's team found that keeping CLAUDE.md to ~100 lines (≈2500 tokens) produces dramatically better results than longer files. Bloated instructions cause Claude to ignore important rules — they get lost in noise. For each line, ask: "Would removing this cause Claude to make mistakes?" If not, cut it.
 
 **What to check**:
-- Total size ≤ 2500 tokens (including content pulled in via `@path` imports)
+- Total size ≤ 2500 tokens (including content pulled in via `@path` imports and all rule files under `.claude/rules/`)
 - No self-evident instructions ("write clean code", "follow best practices")
 - No information Claude can infer by reading the code
 - No file-by-file codebase descriptions or tutorials (link to docs instead)
@@ -384,8 +384,8 @@ These checks target the Claude Code development environment itself — project i
 
 | Hook Event | Check | Behavior |
 |-----------|-------|----------|
-| **Stop** | Count tokens in CLAUDE.md (resolve `@imports`) | Warn if > 2500 tokens |
-| **PostToolUse** (Edit\|Write matching `CLAUDE.md`) | Same token count | Immediate feedback on edits |
+| **Stop** | Count tokens in CLAUDE.md (resolve `@imports`) + all `.claude/rules/` files | Warn if > 2500 tokens |
+| **PostToolUse** (Edit\|Write matching `CLAUDE.md` or `.claude/rules/`) | Same token count | Immediate feedback on edits |
 
 **Default threshold**: 2500 tokens
 
