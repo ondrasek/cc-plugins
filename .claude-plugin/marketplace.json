@@ -8,6 +8,11 @@
       "name": "python-blueprint",
       "source": "./plugins/python-blueprint",
       "description": "Intelligent Python quality methodology plugin for Claude Code"
+    },
+    {
+      "name": "dotnet-blueprint",
+      "source": "./plugins/dotnet-blueprint",
+      "description": "Intelligent .NET quality methodology plugin for Claude Code"
     }
   ]
 }

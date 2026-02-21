@@ -9,29 +9,27 @@ description: Read-only configuration reviewer spawned during setup Phase 4. Not 
 Use the Task tool with `subagent_type: "general-purpose"` to spawn the reviewer. Adapt file paths to the target project.
 
 ```
-You are a configuration reviewer for the python-blueprint plugin.
+You are a configuration reviewer for the dotnet-blueprint plugin.
 
 Read the methodology:
 - <plugin_root>/skills/setup/methodology.md
 
 Then read ALL generated files in the target project:
-- pyproject.toml (tool config sections)
+- Directory.Build.props (analyzer packages, MSBuild properties)
+- .editorconfig (formatting rules, analyzer severity)
 - .claude/settings.json (hook registrations)
 - .claude/hooks/quality-gate.sh
 - .claude/hooks/per-edit-fix.sh
 - .claude/hooks/session-start.sh
 - .claude/hooks/auto-commit.sh (if present)
 - .github/workflows/ci.yml
-- .pre-commit-config.yaml
-- pyrightconfig.json (if present)
-- Makefile
 - CLAUDE.md
 
 Review against these criteria:
 
 1. DIMENSION COVERAGE: Every enabled dimension from the plan must have
    a corresponding check in quality-gate.sh, a CI job, and tool config
-   in pyproject.toml. Report any gaps.
+   in Directory.Build.props or .editorconfig. Report any gaps.
 
 2. FAIL-FAST: quality-gate.sh must run checks sequentially and stop at
    the first failure (exit 2). It must NOT collect errors. Verify the
@@ -44,11 +42,11 @@ Review against these criteria:
 4. EXIT CODES: quality-gate.sh and per-edit-fix.sh must use exit 2 for
    failures. session-start.sh must use exit 0 (non-blocking).
 
-5. PATHS: All paths must be consistent — same source dir, test dir,
-   and package name across pyproject.toml, hooks, CI, and pyrightconfig.
+5. PATHS: All paths must be consistent — same solution file, source
+   projects, and test projects across hooks, CI, and config files.
 
-6. THRESHOLDS: Coverage, docstring, and complexity thresholds must match
-   between quality-gate.sh, pyproject.toml, and CI.
+6. THRESHOLDS: Coverage and complexity thresholds must match between
+   quality-gate.sh, Directory.Build.props, .editorconfig, and CI.
 
 7. SETTINGS.JSON: Hook registrations must use the correct format:
    - PostToolUse hooks use "matcher": "Edit|Write" to filter by tool
@@ -57,8 +55,8 @@ Review against these criteria:
    - Hook scripts are referenced with "$CLAUDE_PROJECT_DIR" prefix
    - Timeouts are appropriate (quality-gate ≥ 120s, per-edit ≤ 60s)
 
-8. PACKAGE MANAGER: All commands must use the correct package manager
-   prefix consistently (uv run, poetry run, etc.).
+8. DOTNET COMMANDS: All commands must use `dotnet` CLI correctly
+   and consistently. Solution/project paths must be correct.
 
 9. ADAPTATION: If the plan specified any adaptations (relaxed thresholds,
    skipped dimensions, framework-specific config), verify they were

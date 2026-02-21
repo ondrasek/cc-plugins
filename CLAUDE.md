@@ -11,15 +11,12 @@ A multi-plugin marketplace repo for Claude Code. Each plugin lives in its own se
 plugins/
   python-blueprint/              — Python quality methodology plugin
     .claude-plugin/plugin.json   — Plugin manifest
-    skills/
-      setup/                     — Main setup skill
-        SKILL.md                 — 6-phase workflow (analyze, plan, configure, review, verify, report)
-        methodology.md           — 8 quality dimensions (roles, not tools) + hook output format
-        analysis-checklist.md    — Target codebase analysis guide
-        templates/               — Adaptable config templates
-      audit/SKILL.md             — Read-only gap analysis
-      update/SKILL.md            — Incremental methodology updates
-      explain/SKILL.md           — Methodology Q&A
+    skills/                      — setup, audit, update, explain
+    hooks/hooks.json             — Plugin-level hook registrations
+    scripts/per-edit-fix.sh      — Plugin-level per-edit auto-fix
+  dotnet-blueprint/              — .NET quality methodology plugin
+    .claude-plugin/plugin.json   — Plugin manifest
+    skills/                      — setup, audit, update, explain
     hooks/hooks.json             — Plugin-level hook registrations
     scripts/per-edit-fix.sh      — Plugin-level per-edit auto-fix
 plans/                           — Development phase documentation
@@ -69,3 +66,19 @@ claude --plugin-dir /path/to/cc-plugins/plugins/python-blueprint
 8. **Architecture & Import Discipline** — import boundaries, dependency hygiene
 
 Each dimension defines a role. The setup skill researches and selects the best current tools to fill each role.
+
+## dotnet-blueprint Plugin
+
+### Key files to understand
+
+- `plugins/dotnet-blueprint/skills/setup/methodology.md` — the intellectual core: 8 quality dimensions defined as roles, hook output format, fail-fast design (adapted for .NET)
+- `plugins/dotnet-blueprint/skills/setup/SKILL.md` — the setup workflow including reviewer subagent
+- `plugins/dotnet-blueprint/skills/setup/templates/` — structural references for generated configs
+
+### .NET-Specific Conventions
+
+- Same role-based methodology as python-blueprint, adapted for .NET ecosystem
+- Templates use shell variables (`${SOLUTION_FILE}`, `${SOURCE_DIR}`, etc.) for customization
+- Config centralization via `Directory.Build.props` and `.editorconfig`
+- Roslyn analyzers preferred over external CLI tools (run during `dotnet build`)
+- Same hook architecture: fail-fast quality gate, per-edit auto-fix, session-start hygiene

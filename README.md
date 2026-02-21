@@ -21,6 +21,7 @@ Then install individual plugins:
 | Plugin | Description |
 |--------|-------------|
 | [python-blueprint](plugins/python-blueprint/) | Intelligent Python quality methodology — analyzes your project and configures 8 dimensions of quality tooling |
+| [dotnet-blueprint](plugins/dotnet-blueprint/) | Intelligent .NET quality methodology — analyzes your project and configures 8 dimensions of quality tooling |
 
 ## Local Development
 
