@@ -1,4 +1,4 @@
-# claude-plugins
+# cc-plugins
 
 A collection of Claude Code plugins by [ondrasek](https://github.com/ondrasek).
 
@@ -7,13 +7,13 @@ A collection of Claude Code plugins by [ondrasek](https://github.com/ondrasek).
 Add this marketplace to Claude Code:
 
 ```
-/plugin marketplace add ondrasek/claude-plugins
+/plugin marketplace add ondrasek/cc-plugins
 ```
 
 Then install individual plugins:
 
 ```
-/plugin install python-blueprint@claude-plugins
+/plugin install python-blueprint@cc-plugins
 ```
 
 ## Available Plugins
@@ -27,5 +27,5 @@ Then install individual plugins:
 ```bash
 # Test a specific plugin against a target project
 cd /path/to/target-project
-claude --plugin-dir /path/to/claude-plugins/plugins/python-blueprint
+claude --plugin-dir /path/to/cc-plugins/plugins/python-blueprint
 ```

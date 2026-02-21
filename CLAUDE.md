@@ -1,4 +1,4 @@
-# CLAUDE.md — claude-plugins
+# CLAUDE.md — cc-plugins
 
 ## What This Is
 
@@ -31,7 +31,7 @@ plans/                           — Development phase documentation
 
 ```bash
 # From a target project directory:
-claude --plugin-dir /path/to/claude-plugins/plugins/python-blueprint
+claude --plugin-dir /path/to/cc-plugins/plugins/python-blueprint
 ```
 
 ### Adding a new plugin
