@@ -1,41 +1,53 @@
-# CLAUDE.md — python-blueprint plugin
+# CLAUDE.md — claude-plugins
 
 ## What This Is
 
-A Claude Code plugin that applies a Python quality methodology to any codebase. Instead of copying config files, it analyzes the target project's ecosystem, researches current best tools, and configures hooks/CI intelligently.
+A multi-plugin marketplace repo for Claude Code. Each plugin lives in its own self-contained directory under `plugins/`.
 
 ## Directory Structure
 
 ```
-.claude-plugin/plugin.json   — Plugin manifest
-skills/
-  setup/                     — Main setup skill
-    SKILL.md                 — 6-phase workflow (analyze, plan, configure, review, verify, report)
-    methodology.md           — 8 quality dimensions (roles, not tools) + hook output format
-    analysis-checklist.md    — Target codebase analysis guide
-    templates/               — Adaptable config templates
-  audit/SKILL.md             — Read-only gap analysis
-  update/SKILL.md            — Incremental methodology updates
-  explain/SKILL.md           — Methodology Q&A
-hooks/hooks.json             — Plugin-level hook registrations
-scripts/per-edit-fix.sh      — Plugin-level per-edit auto-fix
-plans/                       — Development phase documentation
+.claude-plugin/marketplace.json  — Marketplace manifest (lists all plugins)
+plugins/
+  python-blueprint/              — Python quality methodology plugin
+    .claude-plugin/plugin.json   — Plugin manifest
+    skills/
+      setup/                     — Main setup skill
+        SKILL.md                 — 6-phase workflow (analyze, plan, configure, review, verify, report)
+        methodology.md           — 8 quality dimensions (roles, not tools) + hook output format
+        analysis-checklist.md    — Target codebase analysis guide
+        templates/               — Adaptable config templates
+      audit/SKILL.md             — Read-only gap analysis
+      update/SKILL.md            — Incremental methodology updates
+      explain/SKILL.md           — Methodology Q&A
+    hooks/hooks.json             — Plugin-level hook registrations
+    scripts/per-edit-fix.sh      — Plugin-level per-edit auto-fix
+plans/                           — Development phase documentation
 ```
 
 ## Working on This Repo
 
-### Testing the plugin locally
+### Testing a plugin locally
 
 ```bash
 # From a target project directory:
-claude --plugin-dir /path/to/python-blueprint
+claude --plugin-dir /path/to/claude-plugins/plugins/python-blueprint
 ```
+
+### Adding a new plugin
+
+1. Create `plugins/<plugin-name>/` with `.claude-plugin/plugin.json`, `skills/`, etc.
+2. Add an entry to `.claude-plugin/marketplace.json` with `source` pointing to the plugin subdirectory
+3. Create a `plugins/<plugin-name>/README.md`
+4. Add the plugin to the root README table
+
+## python-blueprint Plugin
 
 ### Key files to understand
 
-- `skills/setup/methodology.md` — the intellectual core: 8 quality dimensions defined as roles, hook output format, fail-fast design
-- `skills/setup/SKILL.md` — the setup workflow including reviewer subagent
-- `skills/setup/templates/` — structural references for generated configs
+- `plugins/python-blueprint/skills/setup/methodology.md` — the intellectual core: 8 quality dimensions defined as roles, hook output format, fail-fast design
+- `plugins/python-blueprint/skills/setup/SKILL.md` — the setup workflow including reviewer subagent
+- `plugins/python-blueprint/skills/setup/templates/` — structural references for generated configs
 
 ### Conventions
 
@@ -45,7 +57,7 @@ claude --plugin-dir /path/to/python-blueprint
 - Hook output is structured as a prompt: what failed, tool output, diagnostic hint, action directive
 - Quality gate is fail-fast: one error at a time, exit code 2
 
-## Quality Methodology (8 Dimensions)
+### Quality Methodology (8 Dimensions)
 
 1. **Testing & Coverage** — run tests, enforce coverage threshold
 2. **Linting & Formatting** — consistent style, auto-fix on edit

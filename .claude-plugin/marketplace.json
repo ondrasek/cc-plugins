@@ -1,12 +1,12 @@
 {
-  "name": "python-blueprint",
+  "name": "claude-plugins",
   "owner": {
     "name": "ondrasek"
   },
   "plugins": [
     {
       "name": "python-blueprint",
-      "source": "./",
+      "source": "./plugins/python-blueprint",
       "description": "Intelligent Python quality methodology plugin for Claude Code"
     }
   ]
