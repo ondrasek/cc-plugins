@@ -4,11 +4,23 @@ A Claude Code plugin that intelligently applies a Python quality methodology to 
 
 ## Installation
 
-```bash
-# Install the plugin
-claude plugin add /path/to/python-blueprint
+Inside Claude Code, run:
 
-# Or use it directly
+```
+/plugin marketplace add ondrasek/python-blueprint
+/plugin install python-blueprint@python-blueprint
+```
+
+Then in any Python project:
+
+```
+/python-blueprint:setup
+```
+
+### Local development
+
+```bash
+cd /path/to/target-project
 claude --plugin-dir /path/to/python-blueprint
 ```
 

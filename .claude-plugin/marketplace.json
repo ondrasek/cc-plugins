@@ -1,0 +1,13 @@
+{
+  "name": "python-blueprint",
+  "owner": {
+    "name": "ondrasek"
+  },
+  "plugins": [
+    {
+      "name": "python-blueprint",
+      "source": "./",
+      "description": "Intelligent Python quality methodology plugin for Claude Code"
+    }
+  ]
+}
