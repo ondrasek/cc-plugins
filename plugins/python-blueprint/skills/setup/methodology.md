@@ -27,12 +27,11 @@ The setup skill reads this document to understand what to apply, then researches
 - Report uncovered lines
 
 **Default thresholds**:
-- Minimum coverage: 80%
+- Minimum coverage: 95%
 - Test directory: `tests/`
 
 **Adaptation**:
-- New project (< 500 LOC): 60%
-- Library with public API: 90%
+- New project (< 500 LOC): 80%
 - Legacy project adopting methodology: start at current coverage, increase incrementally
 
 **Quality gate**: Run tests (fail-fast), then run coverage check against threshold.
