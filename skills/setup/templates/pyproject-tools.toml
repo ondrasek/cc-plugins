@@ -1,0 +1,120 @@
+# Tool configuration template for pyproject.toml
+# The setup skill merges relevant sections into the target project's pyproject.toml.
+#
+# TEMPLATE VARIABLES:
+#   ${PYTHON_VERSION}       — e.g., "3.13"
+#   ${PYTHON_VERSION_PY}    — e.g., "py313" (for ruff target-version)
+#   ${ROOT_PACKAGE}         — e.g., "mypackage" (for import-linter)
+#   ${COVERAGE_THRESHOLD}   — e.g., 80
+#   ${DOCSTRING_THRESHOLD}  — e.g., 70
+#
+# SECTIONS: The setup skill includes only sections for enabled dimensions.
+
+# --- Dev dependencies (all tools) ---
+
+[dependency-groups]
+dev = [
+    "pre-commit",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "pyright>=1.1",
+    "bandit>=1.8",
+    "vulture>=2.14",
+    "xenon>=0.9",
+    "refurb>=2.0",
+    "deptry>=0.20",
+    "import-linter>=2.0",
+    "codespell>=2.3",
+    "semgrep>=1.50",
+    "ty>=0.0.1a1",
+    "interrogate>=1.7",
+    "mypy>=1.15",
+]
+
+# --- Linting & Formatting ---
+
+[tool.ruff]
+target-version = "${PYTHON_VERSION_PY}"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "SIM",    # flake8-simplify
+]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.codespell]
+skip = ".venv,*.pyc,__pycache__,.git"
+
+# --- Security ---
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv"]
+skips = ["B101"]  # Allow assert for internal invariants
+
+# --- Complexity ---
+
+[tool.xenon]
+max-absolute = "B"
+max-modules = "A"
+max-average = "A"
+
+# --- Architecture ---
+
+[tool.importlinter]
+root_packages = ["${ROOT_PACKAGE}"]
+
+# Example contract — customize for your architecture:
+# [[tool.importlinter.contracts]]
+# name = "Module A must not import module B"
+# type = "forbidden"
+# source_modules = ["${ROOT_PACKAGE}.module_a"]
+# forbidden_modules = ["${ROOT_PACKAGE}.module_b"]
+
+[tool.deptry]
+ignore = ["DEP003"]  # Self-imports are not transitive deps
+
+# --- Documentation ---
+
+[tool.interrogate]
+exclude = ["tests", "docs"]
+ignore-init-method = true
+ignore-init-module = true
+ignore-magic = true
+ignore-semiprivate = true
+ignore-private = true
+fail-under = ${DOCSTRING_THRESHOLD}
+verbose = 0
+
+# --- Type Checking ---
+
+[tool.ty.environment]
+python-version = "${PYTHON_VERSION}"
+
+[tool.ty.src]
+exclude = ["tests/**", "**/__pycache__"]
+
+[tool.mypy]
+python_version = "${PYTHON_VERSION}"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+# --- Testing ---
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = [".venv", "dist", "build"]
