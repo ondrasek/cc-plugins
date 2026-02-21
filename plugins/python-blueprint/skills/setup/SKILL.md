@@ -2,7 +2,7 @@
 name: setup
 description: Analyzes a Python project and configures 8-dimension quality methodology including hooks, CI, and tool configs. Use when user says "set up quality tools", "configure linting", "add CI pipeline", "python quality", or wants to apply coding standards to a Python project.
 metadata:
-  version: 0.1.0
+  version: 0.2.0
   author: ondrasek
 ---
 

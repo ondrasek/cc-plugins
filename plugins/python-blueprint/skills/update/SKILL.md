@@ -2,7 +2,7 @@
 name: update
 description: Applies incremental methodology updates to a Python project previously configured with python-blueprint. Use when user says "update quality tools", "upgrade methodology", "sync with latest blueprint", or after updating the plugin to get new tool recommendations and configs.
 metadata:
-  version: 0.1.0
+  version: 0.2.0
   author: ondrasek
 ---
 
