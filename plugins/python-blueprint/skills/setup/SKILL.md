@@ -8,53 +8,30 @@ metadata:
 
 # Setup
 
+## Critical Rules
+
+- **Always present analysis and plan to the user before making changes**
+- **Merge, don't replace** — preserve existing pyproject.toml sections, CI jobs, hooks
+- **Use the package manager detected in analysis** (don't assume uv)
+- All hook scripts must be executable (`chmod +x`)
+
 ## Context Files
 
 Read these files from the plugin before starting:
 
 - `skills/setup/methodology.md` — quality dimensions (roles), adaptation rules, hook architecture
 - `skills/setup/analysis-checklist.md` — what to check in the target codebase
-
-Templates in `skills/setup/templates/` are **annotated examples** — they demonstrate structural patterns (hook architecture, CI job layout, Makefile targets) using current tools as examples. During the Configure phase, use templates for the patterns but substitute the tools chosen during research.
+- `skills/setup/templates/` — **annotated examples** showing structural patterns (hook architecture, CI job layout, Makefile targets). Use templates for patterns but substitute the tools chosen during research.
 
 ## Workflow
 
-Execute these 6 phases in order. Present findings and plan to the user before making changes.
+Execute these 6 phases in order.
 
 ### Phase 1: Analyze
 
-Examine the target project to understand its ecosystem. Follow `analysis-checklist.md` systematically.
+Follow `analysis-checklist.md` systematically to examine the target project's ecosystem: package manager, Python version, project structure, frameworks, existing tools, CI, and maturity.
 
-**Steps**:
-
-1. **Package manager** — Check for `uv.lock`, `poetry.lock`, `pdm.lock`, `Pipfile.lock`, `requirements.txt`. Read `pyproject.toml` for `[tool.uv]` or `[tool.poetry]`.
-
-2. **Python version** — Check `pyproject.toml` `requires-python`, `.python-version`, Dockerfile.
-
-3. **Project structure** — Determine if `src/` layout or flat layout. Find the main package directory. Locate `tests/`.
-
-4. **Framework** — Scan dependencies in `pyproject.toml` for django, flask, fastapi, click, typer, celery, sqlalchemy, pydantic.
-
-5. **Existing tools** — Check `pyproject.toml` for `[tool.ruff]`, `[tool.mypy]`, `[tool.pytest]`, `[tool.bandit]`, etc. Check for `pyrightconfig.json`, `.flake8`, `.mypy.ini`, `setup.cfg`, `tox.ini`.
-
-6. **Existing CI** — Check `.github/workflows/`, `.gitlab-ci.yml`, etc.
-
-7. **Existing Claude Code config** — Check `.claude/settings.json`, `.claude/hooks/`, `CLAUDE.md`.
-
-8. **Project maturity** — Estimate LOC, count test files, check git history depth.
-
-**Output**: Present a structured summary to the user:
-```
-Package manager: uv
-Python version: 3.13
-Project structure: src layout (src/mypackage/)
-Framework: FastAPI + Pydantic
-Project size: ~2,500 LOC, 45 test files
-Existing tools: ruff (configured), pytest (configured), mypy (basic)
-Missing dimensions: security, complexity, dead code, documentation, architecture
-CI: GitHub Actions (test + lint jobs exist)
-DevContainer: none
-```
+**Output**: Present a structured summary to the user covering each checklist item and which quality dimensions are missing.
 
 ### Phase 2: Plan
 
@@ -69,11 +46,7 @@ Based on the analysis, determine what to configure. Apply adaptation rules from 
    - Determine configuration adjustments needed (Python version, paths, thresholds)
    - Decide whether to enable or skip this dimension (with rationale)
 
-2. **Determine thresholds** — Based on project maturity:
-   - Coverage threshold (40–90%)
-   - Docstring coverage threshold (50–90%)
-   - Complexity grade (B–D)
-   - Vulture confidence (80–95%)
+2. **Determine thresholds** — Based on project maturity, set thresholds for each dimension per the adaptation rules in `methodology.md` (coverage, docstring coverage, complexity grade, dead code confidence).
 
 3. **Plan file changes** — List every file that will be created or modified:
    - `pyproject.toml` — sections to add/merge
@@ -90,31 +63,21 @@ Based on the analysis, determine what to configure. Apply adaptation rules from 
 
 ### Phase 3: Configure
 
-Apply the approved plan. Templates in `skills/setup/templates/` are **annotated examples** — they demonstrate the structural patterns and architecture, but the specific tools shown are examples, not requirements. Use the templates as starting points and substitute the tools chosen during research.
+Apply the approved plan. Read each template in `templates/` for the structural pattern, substitute the researched tool commands, and write to the target project.
 
-**Steps**:
+**Files to create/update** (read corresponding template for each):
 
-1. **Merge tool configs into pyproject.toml** — Read `templates/pyproject-tools.toml` for structure reference. Generate `[tool.*]` sections for the actual researched tools (not necessarily the ones in the template). Substitute variables, merge into existing `pyproject.toml`. Preserve existing config, only add new sections.
+1. **pyproject.toml** — Merge `[tool.*]` sections for researched tools. Preserve existing config.
+2. **Hook scripts** (`.claude/hooks/`) — `quality-gate.sh`, `per-edit-fix.sh`, `session-start.sh`, optionally `auto-commit.sh`. Follow the run_check/fail pattern, write tool-specific hints. Make executable.
+3. **`.claude/settings.json`** — Hook registrations with correct matchers and timeouts.
+4. **CI pipeline** — One job per enabled dimension. Merge into existing pipeline if present.
+5. **Makefile** — Development command targets for each enabled dimension.
+6. **Type checker config** — Only if the chosen type checker needs a standalone config file.
+7. **`.pre-commit-config.yaml`** — Pre-commit hooks for linter/formatter. Merge if exists.
+8. **CLAUDE.md** — Create from template or append methodology reference to existing.
+9. **(Optional) Style-guide check** — Only if project uses a CLI framework (click, typer).
 
-2. **Create hook scripts** — Read each template (`quality-gate.sh`, `per-edit-fix.sh`, `auto-commit.sh`, `session-start.sh`) for the patterns (run_check/fail mechanism, hint format, exit codes). Substitute the researched tool commands, write tool-specific hints, remove disabled check sections, write to `.claude/hooks/`. Make executable.
-
-3. **Create/update settings.json** — Read `templates/settings.json`, customize hook paths and timeouts, merge into existing `.claude/settings.json`.
-
-4. **Create/update CI pipeline** — Read `templates/ci.yml` for job structure. Substitute researched tool commands, remove/add jobs based on enabled dimensions. If CI exists, merge jobs into existing pipeline.
-
-5. **Create Makefile** — Read `templates/Makefile` for target naming conventions. Substitute researched tool commands. If Makefile exists, merge targets.
-
-6. **Create type checker config** — Only if the chosen type checker requires a standalone config file (e.g., `pyrightconfig.json` for pyright). Type checkers that configure via `pyproject.toml` don't need this.
-
-7. **Create .pre-commit-config.yaml** — Add pre-commit hooks for the chosen linter/formatter. If one exists, merge hooks.
-
-8. **Create/update CLAUDE.md** — If no CLAUDE.md exists, create from `templates/CLAUDE.md`. If one exists, append methodology reference section.
-
-9. **Install dependencies** — Run the package manager's install/sync command to install new dev dependencies.
-
-10. **Install pre-commit hooks** — Run `pre-commit install`.
-
-11. **(Optional) Create style-guide check** — If project uses click/typer, read `templates/style-guide-check.sh`, substitute variables, write to `.claude/hooks/`.
+Then install dev dependencies and pre-commit hooks.
 
 ### Phase 4: Review
 
@@ -144,49 +107,22 @@ Run the quality gate to confirm everything works.
 
 Summarize everything that was done.
 
-**Output**:
+**Output**: Structured summary covering:
+- Configured dimensions (which roles filled, which tools chosen, thresholds)
+- Files created/modified
+- Quality gate results (passing checks, pre-existing issues)
+- Next steps for the user
 
-```
-## Setup Complete
+## Troubleshooting
 
-### Configured Dimensions
-- [x] Testing & Coverage (pytest, 80% threshold)
-- [x] Linting & Formatting (ruff, codespell)
-- [x] Type Safety (pyright, mypy, ty)
-- [x] Security Analysis (bandit, semgrep)
-- [x] Code Complexity (xenon, grade B)
-- [x] Dead Code & Modernization (vulture, refurb)
-- [x] Documentation (interrogate, 70% threshold)
-- [x] Architecture (import-linter, deptry)
+**Quality gate fails immediately after setup**:
+- Distinguish pre-existing issues (code gaps) from configuration issues (bad config). Fix config issues. Report pre-existing issues as next steps for the user.
 
-### Files Created/Modified
-- pyproject.toml — added tool configs and dev dependencies
-- .claude/hooks/ — quality-gate.sh, per-edit-fix.sh, auto-commit.sh, session-start.sh
-- .claude/settings.json — hook registrations
-- .github/workflows/ci.yml — CI pipeline
-- Makefile — development commands
-- pyrightconfig.json — type checker config
-- .pre-commit-config.yaml — pre-commit hooks
+**Package manager not detected**:
+- Check for `pyproject.toml`, lock files, or `requirements.txt`. Ask the user which package manager they use.
 
-### Quality Gate Results
-- 12/15 checks passing
-- 3 pre-existing issues to address:
-  - coverage: 62% (below 80% threshold)
-  - interrogate: 45% docstring coverage (below 70%)
-  - vulture: 3 unused functions detected
+**Hook timeout**:
+- Increase timeout in `.claude/settings.json`. Quality gate may need 120s+ for large projects.
 
-### Next Steps
-- Add tests to reach 80% coverage
-- Add docstrings to public functions
-- Remove or whitelist unused code detected by vulture
-- Run `/python-blueprint:audit` periodically to check progress
-```
-
-## Important Notes
-
-- Always present analysis and plan to the user before making changes
-- Never overwrite user's existing configurations without asking
-- Merge, don't replace — preserve existing pyproject.toml sections, CI jobs, etc.
-- Use the package manager detected in analysis (don't assume uv)
-- All hook scripts must be executable (chmod +x)
-- Paths in templates use `$CLAUDE_PROJECT_DIR` which Claude Code resolves at runtime
+**Pre-commit install fails**:
+- Verify pre-commit is installed in the project's dev dependencies. Run the package manager install first.

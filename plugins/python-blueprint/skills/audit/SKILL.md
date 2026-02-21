@@ -81,7 +81,7 @@ Present findings in a structured format:
 - [x] PostToolUse (per-edit fix)
 - [x] Stop (quality gate)
 - [ ] Stop (auto-commit) — not configured
-- [ ] SessionStart (deptry) — not configured
+- [ ] SessionStart (dependency hygiene) — not configured
 
 ### CI Coverage
 - [x] test
@@ -99,8 +99,15 @@ Present findings in a structured format:
 
 ## Important Notes
 
-- This skill only reads and reports — it never modifies files
 - Compare against methodology roles, not specific tools — any tool filling the role counts
 - Note where project-specific thresholds may be appropriate
 - Flag outdated tools that have been superseded by better alternatives
 - Report both missing dimensions and misconfigured existing tools
+
+## Troubleshooting
+
+**No pyproject.toml found**:
+- The project may use setup.cfg or setup.py. Check those for tool configs. Recommend migrating to pyproject.toml.
+
+**Hooks configured but methodology.md not found**:
+- The project may have been configured manually without the plugin. Audit the hooks against the methodology principles anyway.

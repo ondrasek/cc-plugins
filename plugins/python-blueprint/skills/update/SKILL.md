@@ -81,3 +81,11 @@ Summarize what was updated and any manual steps needed.
 - Preserve project-specific customizations (custom thresholds, extra rules, whitelists)
 - If a project has deliberately disabled a dimension, don't re-enable it
 - Update one dimension at a time to make changes reviewable
+
+## Troubleshooting
+
+**Project was not configured with python-blueprint**:
+- Run `/python-blueprint:audit` first to understand current state, then suggest `/python-blueprint:setup` instead.
+
+**Quality gate fails after update**:
+- The update may have tightened thresholds or added new checks. Distinguish new failures from regressions. Roll back individual changes if needed.
