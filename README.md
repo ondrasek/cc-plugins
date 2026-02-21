@@ -1,89 +1,101 @@
 # python-blueprint
 
-A reusable project blueprint for Python projects using Claude Code. Provides a complete development environment with quality gates, CI/CD, devcontainer, and Claude Code hooks.
+A Claude Code plugin that intelligently applies a Python quality methodology to any codebase. Rather than copying config files, it analyzes your project's ecosystem, selects appropriate tools, and configures hooks and CI to match.
 
-## What's Included
-
-- **Claude Code configuration** — hooks (quality gate with 15 checks, auto-commit, per-edit fix, session start), statusline, agents, and slash commands
-- **DevContainer** — full Python 3.13 development environment with pyenv, uv, Claude CLI, zsh
-- **CI/CD** — GitHub Actions workflow for test, lint, typecheck, security, and dead code checks
-- **Tool configuration** — ruff, pyright, mypy, bandit, vulture, xenon, refurb, interrogate, semgrep, ty, import-linter, codespell, deptry, pytest
-- **Pre-commit hooks** — ruff lint and format checks
-- **Makefile** — common development commands (setup, test, lint, format, clean)
-
-## Quick Start
-
-### 1. Add as a git submodule
+## Installation
 
 ```bash
-cd your-project
-git submodule add <blueprint-repo-url> .blueprint
-git commit -m "Add python-blueprint submodule"
+# Install the plugin
+claude plugin add /path/to/python-blueprint
+
+# Or use it directly
+claude --plugin-dir /path/to/python-blueprint
 ```
 
-### 2. Apply the blueprint
+## Skills
+
+### `/python-blueprint:setup`
+
+The main skill. Analyzes your Python project and configures quality tooling:
+
+1. **Analyze** — detects package manager, project structure, Python version, frameworks, existing tools
+2. **Plan** — selects tools, determines thresholds, identifies conflicts
+3. **Configure** — generates/merges pyproject.toml sections, creates hooks, sets up CI
+4. **Verify** — runs quality checks to confirm everything works
+5. **Report** — summarizes changes and any manual steps needed
+
+### `/python-blueprint:audit`
+
+Gap analysis — compares your project's current setup against the full methodology and reports missing or outdated configuration.
+
+### `/python-blueprint:update`
+
+Incremental updates — applies methodology improvements while preserving your project-specific customizations.
+
+### `/python-blueprint:explain`
+
+Read-only Q&A — answers questions about why specific tools are included, how thresholds were chosen, and what each quality dimension covers.
+
+## Quality Methodology
+
+The plugin applies an 8-dimension quality methodology:
+
+| Dimension | Tools | What it checks |
+|-----------|-------|----------------|
+| Testing & Coverage | pytest, coverage | Tests pass, minimum coverage met |
+| Linting & Formatting | ruff | Code style, import sorting, formatting |
+| Type Safety | pyright, mypy | Static type analysis |
+| Security Analysis | bandit, semgrep | Security vulnerabilities, patterns |
+| Code Complexity | xenon | Cyclomatic complexity thresholds |
+| Dead Code & Modernization | vulture, refurb | Unused code, Python idiom updates |
+| Documentation | interrogate | Docstring coverage |
+| Architecture | import-linter, deptry | Import discipline, dependency hygiene |
+
+The methodology adapts to your project — adjusting tool selection, thresholds, and configuration based on project type, size, maturity, and existing tooling.
+
+## Included Components
+
+Beyond the setup skill, the plugin provides:
+
+- **Agents** — git workflow, GitHub issues management, PR workflow
+- **Commands** — git operations, PR creation, PR review loop, issue lifecycle
+- **Hooks** — per-edit auto-fix (plugin-level)
+
+## Project Structure
+
+```
+.claude-plugin/plugin.json   — Plugin manifest
+skills/                      — Skill definitions and methodology
+agents/                      — Workflow agents
+commands/                    — Slash commands
+hooks/                       — Plugin-level hook registrations
+scripts/                     — Hook scripts
+plans/                       — Development phase documentation
+blueprint/                   — Original blueprint files (reference material)
+```
+
+## Development
+
+This plugin is being built in phases. See `plans/` for detailed documentation:
+
+1. Plugin scaffold + CLAUDE.md
+2. Methodology document + templates
+3. Setup skill
+4. Port agents + commands
+5. Supporting skills (audit, update, explain)
+6. End-to-end testing + polish
+
+### Contributing
 
 ```bash
-.blueprint/apply.sh
+# Test the plugin locally against a target project
+cd /path/to/target-project
+claude --plugin-dir /path/to/python-blueprint
+
+# Run the setup skill
+/python-blueprint:setup
 ```
 
-This invokes Claude Code to intelligently merge the blueprint into your project:
-- **Overwrites:** `.claude/`, `.devcontainer/`, `.github/workflows/ci.yml`, `Makefile`, `pyrightconfig.json`, `.pre-commit-config.yaml`
-- **Smart merges:** tool config into `pyproject.toml`, entries into `.gitignore`
-- **Creates if missing:** `CLAUDE.md` (starter template)
-- **Never touches:** `src/`, `tests/`, `README.md`, or any project source code
+## Prior Art
 
-### 3. Review and commit
-
-```bash
-git diff                    # Review changes
-git add -A && git commit -m "Apply python-blueprint"
-```
-
-## Updating
-
-When the blueprint is updated upstream:
-
-```bash
-cd .blueprint
-git pull origin main
-cd ..
-.blueprint/apply.sh         # Re-apply with latest changes
-git add -A && git commit -m "Update python-blueprint"
-```
-
-## Quality Gate (15 checks)
-
-The quality gate runs automatically as a Claude Code Stop hook:
-
-1. **pytest** — tests must pass
-2. **coverage** — minimum 80% coverage
-3. **ruff check** — linting
-4. **ruff format** — formatting
-5. **pyright** — type checking
-6. **mypy** — strict type checking
-7. **bandit** — security analysis
-8. **vulture** — dead code detection
-9. **xenon** — cyclomatic complexity (B/A/A thresholds)
-10. **refurb** — Python modernization
-11. **import-linter** — import architecture enforcement
-12. **semgrep** — security and correctness patterns
-13. **ty** — additional type checking
-14. **interrogate** — docstring coverage (70% minimum)
-15. **style-guide** — CLI output formatting rules
-
-## File Reference
-
-| File | Purpose |
-|------|---------|
-| `apply.sh` | Entry point — invokes Claude Code to merge blueprint |
-| `APPLY_PROMPT.md` | Merge instructions for Claude Code |
-| `pyproject-tools.toml` | Tool configuration sections for pyproject.toml |
-| `gitignore.blueprint` | Generic Python .gitignore entries |
-| `CLAUDE.md.blueprint` | Starter CLAUDE.md template |
-| `.claude/` | Claude Code hooks, agents, commands, statusline |
-| `.devcontainer/` | Full devcontainer setup |
-| `.github/workflows/ci.yml` | GitHub Actions CI pipeline |
-| `Makefile` | Common development commands |
-| `pyrightconfig.json` | Pyright type checker configuration |
-| `.pre-commit-config.yaml` | Pre-commit hook configuration |
+This plugin evolved from a git-submodule-based blueprint. The original blueprint files are preserved in `blueprint/` as reference material for the methodology extraction. See `blueprint/README.md` (the previous README) for the original approach.

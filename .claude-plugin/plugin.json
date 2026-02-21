@@ -1,0 +1,8 @@
+{
+  "name": "python-blueprint",
+  "version": "0.1.0",
+  "description": "Intelligent Python quality methodology plugin for Claude Code",
+  "author": {
+    "name": "ondrasek"
+  }
+}
