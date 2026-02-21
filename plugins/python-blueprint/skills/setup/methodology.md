@@ -356,3 +356,99 @@ For projects using CLI frameworks (click, typer, etc.):
 3. **Emoji prefixes** — section headings should include an emoji
 
 This is an optional check, only enabled when a CLI framework is detected.
+
+---
+
+## Claude Code Hygiene
+
+These checks target the Claude Code development environment itself — project instructions, hooks, and agent configuration. Unlike the 8 code quality dimensions, these ensure the AI-assisted workflow is correctly set up and efficient.
+
+**Sources**: Boris Cherny (creator of Claude Code) internal workflow recommendations; official Anthropic Claude Code best practices.
+
+---
+
+### CC1: Project Instructions (CLAUDE.md)
+
+**Role**: Keep CLAUDE.md concise, actionable, and focused so Claude follows every instruction reliably.
+
+**Why this matters**: Boris Cherny's team found that keeping CLAUDE.md to ~100 lines (≈2500 tokens) produces dramatically better results than longer files. Bloated instructions cause Claude to ignore important rules — they get lost in noise. For each line, ask: "Would removing this cause Claude to make mistakes?" If not, cut it.
+
+**What to check**:
+- Total size ≤ 2500 tokens (including content pulled in via `@path` imports)
+- No self-evident instructions ("write clean code", "follow best practices")
+- No information Claude can infer by reading the code
+- No file-by-file codebase descriptions or tutorials (link to docs instead)
+- Includes required operational content: build/test commands, non-obvious conventions, environment quirks
+
+**Actionable checks**:
+
+| Hook Event | Check | Behavior |
+|-----------|-------|----------|
+| **Stop** | Count tokens in CLAUDE.md (resolve `@imports`) | Warn if > 2500 tokens |
+| **PostToolUse** (Edit\|Write matching `CLAUDE.md`) | Same token count | Immediate feedback on edits |
+
+**Default threshold**: 2500 tokens
+
+**Adaptation**:
+- Monorepo with nested CLAUDE.md files: each file ≤ 2500, not cumulative
+- Complex project: split into CLAUDE.md + `@imported` reference files, but keep resolved total under 2500
+- New project: start minimal, add rules only when Claude makes a mistake that needs correcting
+
+---
+
+### CC2: Hook & Script Hygiene
+
+**Role**: Ensure Claude Code hooks are correctly configured so the feedback loop works reliably.
+
+**Why this matters**: A misconfigured hook silently breaks the quality loop — scripts that aren't executable never run, wrong exit codes don't trigger fixes, case-sensitive matcher typos skip checks entirely.
+
+**What to check**:
+- All registered hook scripts exist and are executable (`chmod +x`)
+- Exit codes follow convention: 0 (pass), 2 (fail with feedback). Never exit 1 for check failures — exit 1 logs the error but doesn't force Claude to fix it
+- Matchers are case-sensitive correct (`Edit|Write` not `edit|write`, `Bash` not `bash`)
+- Scripts use `${CLAUDE_PROJECT_DIR}` or `${CLAUDE_PLUGIN_ROOT}` for paths, not hardcoded absolute paths
+- Timeouts are appropriate: quality gate ≥ 120s for large projects, per-edit ≤ 30s
+- No hooks sourced from untrusted origins
+
+**Actionable checks**:
+
+| Hook Event | Check | Behavior |
+|-----------|-------|----------|
+| **SessionStart** | Validate all registered hook scripts exist and are executable | Warn (non-blocking) on missing or non-executable scripts |
+| **SessionStart** | Check for common matcher typos (lowercase tool names) | Warn on likely case errors |
+
+**Rules** (for hook authors):
+- Every `run_check` block must include a tool-specific diagnostic hint, not generic "fix the error" advice
+- Hook output is a prompt: what failed → tool output → hint → action directive
+- Quality gate must be fail-fast (one error at a time, sequential checks)
+
+---
+
+### CC3: Context Efficiency
+
+**Role**: Keep skills, prompts, and configuration right-sized to preserve Claude's context window.
+
+**Why this matters**: The context window is the most important resource in AI-assisted development (Anthropic docs). LLM performance degrades as context fills. Skill descriptions load into context automatically; bloated skills waste tokens and crowd out the actual work. Boris Cherny recommends using subagents for heavy investigation to keep the main conversation clean.
+
+**What to check**:
+- Skill SKILL.md files ≤ 500 lines (move detailed reference to separate files)
+- Subagent prompts are scoped to a single responsibility
+- Heavy reference material uses progressive disclosure: metadata → SKILL.md body → `references/` subdirectory
+- Agent definitions in `agents/` include focused `description` and `tools` restrictions
+
+**Actionable checks**:
+
+| Hook Event | Check | Behavior |
+|-----------|-------|----------|
+| **SessionStart** | Measure line count of all SKILL.md files | Warn (non-blocking) if any exceed 500 lines |
+
+**Progressive disclosure pattern** (3 levels):
+
+1. **Frontmatter** (`name`, `description`) — always loaded into context for skill discovery
+2. **SKILL.md body** — loaded when skill is invoked; keep to workflow essentials
+3. **References** (`references/`, `templates/`) — loaded on demand by the skill body's instructions
+
+**Rules**:
+- Never inline large prompt templates in SKILL.md — extract to `references/`
+- Subagents spawned by skills should use `tools` restrictions to limit their scope
+- Use `/clear` between unrelated tasks; use subagents for exploratory research
