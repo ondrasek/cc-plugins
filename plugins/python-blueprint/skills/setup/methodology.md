@@ -177,15 +177,26 @@ The setup skill reads this document to understand what to apply, then researches
 **Role**: Enforce import boundaries between modules. Detect dependency hygiene issues.
 
 **What the tools must do**:
-- Import linting: enforce contracts (forbidden imports, layer dependencies)
+- Circular import detection: find circular dependencies between modules (always active)
+- Import contract enforcement: enforce declared layer boundaries (activated by contracts existing)
 - Dependency hygiene: detect unused, missing, or transitive dependencies in `pyproject.toml`
 
-**Adaptation**:
-- Single-module project: skip import linting (nothing to enforce)
-- New project: start with dependency hygiene only; add import contracts when architecture emerges
-- Django: configure layer contracts (views → services → models)
+**Progressive activation**:
 
-**Quality gate**: Run import linter.
+Import contracts are never configured speculatively. The quality gate drives their introduction:
+
+1. **No contracts defined**: the gate runs circular import detection only. Most projects start here.
+2. **Circular import detected** → gate fails with a hint telling Claude to define import contracts in `pyproject.toml` that formalize the project's package structure, then fix the circular dependency.
+3. **Contracts exist**: the gate enforces them on every run. Violations fail the gate like any other check.
+
+This means a single-module project or a new project never sees import linting — until a real violation demands it.
+
+**Adaptation**:
+- Single-module project: circular import detection has nothing to find; effectively a no-op
+- Django: when contracts are bootstrapped, hint should suggest layer contracts (views → services → models)
+- Monorepo: contracts per package, not project-wide
+
+**Quality gate**: Run circular import detection. If contracts exist, also run import contract enforcement.
 
 **Session start hook**: Run dependency hygiene check (non-blocking warnings).
 
