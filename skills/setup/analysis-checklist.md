@@ -134,18 +134,7 @@ This checklist defines what the setup skill must analyze in a target codebase be
 
 ---
 
-## 9. DevContainer
-
-**Check for**:
-- [ ] `.devcontainer/devcontainer.json` — existing devcontainer
-- [ ] `.devcontainer/Dockerfile` — custom image
-- [ ] Codespaces badge in README
-
-**Impact**: If no devcontainer exists and user wants one, generate from template. If one exists, offer to enhance with methodology tools.
-
----
-
-## 10. Pre-commit
+## 9. Pre-commit
 
 **Check for**:
 - [ ] `.pre-commit-config.yaml` — existing pre-commit config
@@ -168,7 +157,6 @@ Project size: ~2,500 LOC, 45 test files
 Existing tools: ruff (configured), pytest (configured), mypy (basic)
 Missing dimensions: security, complexity, dead code, documentation, architecture
 CI: GitHub Actions (test + lint jobs exist)
-DevContainer: none
 ```
 
 This summary drives the plan phase, where the skill selects which dimensions to configure and how.

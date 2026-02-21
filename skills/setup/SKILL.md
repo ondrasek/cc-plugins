@@ -78,11 +78,9 @@ Based on the analysis, determine what to configure. Apply adaptation rules from 
    - `Makefile` — development commands
    - `CLAUDE.md` — project instructions
    - `pyrightconfig.json` — type checker config
-   - `.devcontainer/` — (optional, if user wants it)
-
 4. **Identify conflicts** — Flag any existing config that conflicts with the methodology and propose resolution.
 
-**Output**: Present the complete plan to the user and wait for approval before proceeding. Ask about optional items (devcontainer, auto-commit hook, style-guide check).
+**Output**: Present the complete plan to the user and wait for approval before proceeding. Ask about optional items (auto-commit hook, style-guide check).
 
 ### Phase 3: Configure
 
@@ -110,9 +108,7 @@ Apply the approved plan. Read templates from `skills/setup/templates/` and adapt
 
 10. **Install pre-commit hooks** — Run `pre-commit install`.
 
-11. **(Optional) Create devcontainer** — If approved by user, read `templates/devcontainer.json` and `templates/Dockerfile`, substitute variables, write to `.devcontainer/`.
-
-12. **(Optional) Create style-guide check** — If project uses click/typer, read `templates/style-guide-check.sh`, substitute variables, write to `.claude/hooks/`.
+11. **(Optional) Create style-guide check** — If project uses click/typer, read `templates/style-guide-check.sh`, substitute variables, write to `.claude/hooks/`.
 
 ### Phase 4: Review
 
