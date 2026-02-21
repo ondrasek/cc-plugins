@@ -1,8 +1,0 @@
-{
-  "include": ["src"],
-  "exclude": ["**/__pycache__", ".venv"],
-  "pythonVersion": "3.13",
-  "typeCheckingMode": "standard",
-  "reportMissingImports": true,
-  "reportMissingTypeStubs": false
-}

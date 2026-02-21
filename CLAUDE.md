@@ -2,36 +2,25 @@
 
 ## What This Is
 
-A Claude Code plugin that applies a Python quality methodology to any codebase. Instead of copying config files, it analyzes the target project's ecosystem, selects appropriate tools, and configures hooks/CI intelligently.
+A Claude Code plugin that applies a Python quality methodology to any codebase. Instead of copying config files, it analyzes the target project's ecosystem, researches current best tools, and configures hooks/CI intelligently.
 
 ## Directory Structure
 
 ```
 .claude-plugin/plugin.json   — Plugin manifest
 skills/
-  setup/                     — Main setup skill (Phase 3)
-    methodology.md           — Quality dimensions and adaptation rules (Phase 2)
-    tool-catalog.md          — Tool descriptions and alternatives (Phase 2)
-    analysis-checklist.md    — Target codebase analysis guide (Phase 2)
-    templates/               — Adaptable config templates (Phase 2)
-    SKILL.md                 — Setup skill definition (Phase 3)
-  audit/SKILL.md             — Gap analysis skill (Phase 5)
-  update/SKILL.md            — Incremental update skill (Phase 5)
-  explain/SKILL.md           — Methodology Q&A skill (Phase 5)
-hooks/                       — Plugin-level hook registrations (Phase 3)
-scripts/                     — Hook scripts (Phase 3)
-plans/                       — Phase plan documents
-blueprint/                   — Original blueprint files (reference material)
+  setup/                     — Main setup skill
+    SKILL.md                 — 6-phase workflow (analyze, plan, configure, review, verify, report)
+    methodology.md           — 8 quality dimensions (roles, not tools) + hook output format
+    analysis-checklist.md    — Target codebase analysis guide
+    templates/               — Adaptable config templates
+  audit/SKILL.md             — Read-only gap analysis
+  update/SKILL.md            — Incremental methodology updates
+  explain/SKILL.md           — Methodology Q&A
+hooks/hooks.json             — Plugin-level hook registrations
+scripts/per-edit-fix.sh      — Plugin-level per-edit auto-fix
+plans/                       — Development phase documentation
 ```
-
-## Development Status
-
-See `plans/` for detailed phase documentation:
-- Phase 1: Plugin scaffold + CLAUDE.md (complete)
-- Phase 2: Methodology document + templates (complete)
-- Phase 3: Setup skill (`/python-blueprint:setup`) (complete)
-- Phase 5: Supporting skills (audit, update, explain)
-- Phase 6: End-to-end testing + polish
 
 ## Working on This Repo
 
@@ -44,29 +33,27 @@ claude --plugin-dir /path/to/python-blueprint
 
 ### Key files to understand
 
-- `blueprint/` contains the original quality gate, hooks, and configs — the source material for the methodology
-- `blueprint/.claude/hooks/quality-gate.sh` has the 15-point quality gate
-- `blueprint/pyproject-tools.toml` has all tool configurations
-- `blueprint/.github/workflows/ci.yml` has the CI pipeline
+- `skills/setup/methodology.md` — the intellectual core: 8 quality dimensions defined as roles, hook output format, fail-fast design
+- `skills/setup/SKILL.md` — the setup workflow including reviewer subagent
+- `skills/setup/templates/` — structural references for generated configs
 
 ### Conventions
 
-- Templates in `skills/setup/templates/` use shell variables (`${PROJECT_NAME}`, etc.) for customization points
-- Methodology documents are Markdown, designed to be read by Claude as context for the setup skill
+- Methodology defines **roles** (what to check), not tools. The setup skill researches tools dynamically.
+- Templates use shell variables (`${PACKAGE_MANAGER_RUN}`, `${SOURCE_DIR}`, etc.) for customization
 - Plugin-level hooks use `${CLAUDE_PLUGIN_ROOT}` for path resolution
-- Phase docs in `plans/` are the source of truth for what each phase delivers
+- Hook output is structured as a prompt: what failed, tool output, diagnostic hint, action directive
+- Quality gate is fail-fast: one error at a time, exit code 2
 
 ## Quality Methodology (8 Dimensions)
 
-The methodology being extracted from `blueprint/` covers:
+1. **Testing & Coverage** — run tests, enforce coverage threshold
+2. **Linting & Formatting** — consistent style, auto-fix on edit
+3. **Type Safety** — static type analysis
+4. **Security Analysis** — vulnerability pattern detection
+5. **Code Complexity** — cyclomatic complexity limits
+6. **Dead Code & Modernization** — unused code, modern idioms
+7. **Documentation** — docstring coverage
+8. **Architecture & Import Discipline** — import boundaries, dependency hygiene
 
-1. **Testing & Coverage** — pytest, minimum coverage thresholds
-2. **Linting & Formatting** — ruff (check + format)
-3. **Type Safety** — pyright, mypy
-4. **Security Analysis** — bandit, semgrep
-5. **Code Complexity** — xenon (cyclomatic complexity)
-6. **Dead Code & Modernization** — vulture, refurb
-7. **Documentation** — interrogate (docstring coverage)
-8. **Architecture & Import Discipline** — import-linter, deptry
-
-Each dimension has adaptation rules for different project types, sizes, and maturity levels.
+Each dimension defines a role. The setup skill researches and selects the best current tools to fill each role.
