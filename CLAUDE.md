@@ -27,6 +27,8 @@ plugins/
   github-issues/                 — GitHub issue management utility plugin
     .claude-plugin/plugin.json   — Plugin manifest
     skills/                      — triage, manage, refine, develop, organize
+    hooks/hooks.json             — Plugin-level hook registrations
+    scripts/                     — session-start, commit-reference-check, stop-reminder
 plans/                           — Development phase documentation
 ```
 
@@ -151,12 +153,19 @@ Each dimension defines a role. The setup skill researches and selects the best c
 
 ### Conventions
 
-- **Utility plugin** — no hooks, no scripts. All operations are user-initiated via skills.
 - **`gh` CLI everywhere** — all operations use `gh` commands with `--json` for structured output
 - **Cross-cutting behaviors** are documented once in `skills/shared/references/` and referenced from every SKILL.md
 - **NEVER create priority labels** — explicit user requirement, enforced across all skills
 - **Sub-issues for epic decomposition** — uses GitHub's native sub-issue support (`--add-parent`)
 - **Comments explain "why"** — every significant change gets a comment providing context
+
+### Hooks (3)
+
+- **SessionStart** (`session-start.sh`) — displays issue context when on an issue-linked branch (non-blocking)
+- **PostToolUse/Bash** (`commit-reference-check.sh`) — blocks commits missing `#N` issue reference, instructs to amend (exit 2)
+- **Stop** (`stop-reminder.sh`) — reminds to update the issue with work summary when unpushed commits exist (non-blocking)
+
+Branch convention: `<issue-number>-<description>` (e.g., `42-fix-bug` → issue #42). Non-matching branches are silently ignored.
 
 ### Skills (5)
 

@@ -20,6 +20,18 @@ Gives Claude Code natural language access to GitHub issues — querying, creatin
 | **develop** | "start working on issue #42", "create a branch" | Bridge issues to development workflow |
 | **organize** | "lock issue", "pin this", "transfer to another repo" | Administrative operations |
 
+## Hooks
+
+The plugin includes three hooks that enforce issue reference discipline in git workflows:
+
+| Hook | Event | Blocking? | What it does |
+|------|-------|-----------|--------------|
+| **session-start** | SessionStart | No | Displays issue context (title, state, labels, assignees) when on an issue-linked branch |
+| **commit-reference-check** | PostToolUse(Bash) | Yes (exit 2) | Blocks commits missing `#N` reference on issue-linked branches; instructs Claude to amend |
+| **stop-reminder** | Stop | No | Reminds to update the issue with a work summary when there are unpushed commits |
+
+**Branch convention**: Hooks detect issue-linked branches by the pattern `<number>-<description>` (e.g., `42-fix-login-bug` → issue #42). Non-matching branches are silently ignored.
+
 ## Cross-Cutting Behaviors
 
 All skills automatically:
