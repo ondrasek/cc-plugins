@@ -2,6 +2,7 @@
 # PostToolUse/Bash hook: blocks commits when plugin files changed but version wasn't bumped.
 # Compares against merge-base with main (or HEAD~1 if on main).
 # Exit 0 = pass, Exit 2 = block with structured feedback.
+# Compatible with bash 3 (macOS default).
 
 set -euo pipefail
 
@@ -24,8 +25,7 @@ if echo "$COMMAND" | grep -qE '(--amend|--no-edit.*merge|rebase|cherry-pick)'; t
   exit 0
 fi
 
-# Check if the commit actually succeeded (tool_result should not indicate failure)
-TOOL_ERROR="$(echo "$INPUT" | jq -r '.tool_result.stderr // empty' 2>/dev/null)"
+# Check if the commit actually succeeded
 EXIT_CODE="$(echo "$INPUT" | jq -r '.tool_result.exit_code // 0' 2>/dev/null)"
 if [ "$EXIT_CODE" != "0" ] 2>/dev/null; then
   exit 0
@@ -69,10 +69,11 @@ if [ -z "$AFFECTED_PLUGINS" ]; then
   exit 0  # no plugin files changed
 fi
 
-# Check each affected plugin for version bump
-UNBUMPED=()
-UNBUMPED_DETAILS=()
+# Temp file to collect unbumped plugin details (bash 3 compatible, no arrays)
+DETAILS_FILE="$(mktemp "${TMPDIR:-/tmp}/version-bump-check.XXXXXX")"
+trap 'rm -f "$DETAILS_FILE"' EXIT
 
+# Check each affected plugin for version bump
 for PLUGIN_PATH in $AFFECTED_PLUGINS; do
   PLUGIN_NAME="$(basename "$PLUGIN_PATH")"
   MANIFEST="$PLUGIN_PATH/.claude-plugin/plugin.json"
@@ -91,30 +92,24 @@ for PLUGIN_PATH in $AFFECTED_PLUGINS; do
 
   # Compare versions
   if [ "$BASE_VERSION" = "$HEAD_VERSION" ]; then
-    # Collect changed files for this plugin
-    PLUGIN_FILES="$(echo "$CHANGED_FILES" | grep "^$PLUGIN_PATH/" | head -10)"
-    UNBUMPED+=("$PLUGIN_NAME")
-    UNBUMPED_DETAILS+=("$(printf '  Plugin: %s\n  Current version: %s\n  Manifest: %s\n  Changed files:\n%s' \
-      "$PLUGIN_NAME" "$HEAD_VERSION" "$MANIFEST" \
-      "$(echo "$PLUGIN_FILES" | sed 's/^/    - /')")")
+    PLUGIN_FILES="$(echo "$CHANGED_FILES" | grep "^$PLUGIN_PATH/" | head -10 | sed 's/^/    - /')"
+    printf '  Plugin: %s\n  Current version: %s\n  Manifest: %s\n  Changed files:\n%s\n\n' \
+      "$PLUGIN_NAME" "$HEAD_VERSION" "$MANIFEST" "$PLUGIN_FILES" >> "$DETAILS_FILE"
   fi
 done
 
-# If all versions are bumped, pass
-if [ ${#UNBUMPED[@]} -eq 0 ]; then
+# If no unbumped plugins, pass
+if [ ! -s "$DETAILS_FILE" ]; then
   exit 0
 fi
 
 # Block with structured message
-PLUGIN_LIST="$(printf '%s, ' "${UNBUMPED[@]}")"
-PLUGIN_LIST="${PLUGIN_LIST%, }"
-
 cat <<EOF
 BLOCKED: Plugin version not bumped.
 
 The following plugin(s) have changes but their version in plugin.json was not updated:
 
-$(printf '%s\n\n' "${UNBUMPED_DETAILS[@]}")
+$(cat "$DETAILS_FILE")
 Action required: Determine the appropriate semver increment for each plugin listed above:
 - PATCH (x.y.Z): bug fixes, minor tweaks, documentation changes
 - MINOR (x.Y.0): new features, new skills, backward-compatible enhancements
