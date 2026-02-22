@@ -2,7 +2,7 @@
 name: setup
 description: Analyzes a Rust project and configures 9-dimension quality methodology including hooks, CI, and tool configs. Use when user says "set up quality tools", "configure linting", "add CI pipeline", "rust quality", or wants to apply coding standards to a Rust project.
 metadata:
-  version: 0.1.0
+  version: 0.2.0
   author: ondrasek
 ---
 

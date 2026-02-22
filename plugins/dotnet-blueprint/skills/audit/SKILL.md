@@ -2,7 +2,7 @@
 name: audit
 description: Read-only gap analysis comparing a .NET project's current quality setup against the 9-dimension methodology. Use when user says "audit quality", "check coverage gaps", "what's missing", or wants to see how their project measures up before running setup.
 metadata:
-  version: 0.1.0
+  version: 0.2.0
   author: ondrasek
 ---
 
