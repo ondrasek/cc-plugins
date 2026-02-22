@@ -3,6 +3,7 @@
   "version": "0.2.0",
   "description": "Intelligent Rust quality methodology plugin for Claude Code",
   "author": {
-    "name": "ondrasek"
+    "name": "Ondrej (Ondra) Krajicek",
+    "email": "me@ondrejkrajicek.com"
   }
 }

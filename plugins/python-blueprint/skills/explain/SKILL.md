@@ -3,7 +3,7 @@ name: explain
 description: Answers questions about the Python quality methodology — why tools are chosen, how thresholds work, what each dimension covers, and how hooks interact. Use when user asks "why this tool", "what does the quality gate do", "how are thresholds set", or any methodology question.
 metadata:
   version: 0.3.0
-  author: ondrasek
+  author: Ondrej (Ondra) Krajicek, me@ondrejkrajicek.com
 ---
 
 # Explain

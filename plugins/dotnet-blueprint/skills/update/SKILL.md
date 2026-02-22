@@ -3,7 +3,7 @@ name: update
 description: Applies incremental methodology updates to a .NET project previously configured with dotnet-blueprint. Use when user says "update quality tools", "upgrade methodology", "sync with latest blueprint", or after updating the plugin to get new analyzer recommendations and configs.
 metadata:
   version: 0.2.0
-  author: ondrasek
+  author: Ondrej (Ondra) Krajicek, me@ondrejkrajicek.com
 ---
 
 # Update

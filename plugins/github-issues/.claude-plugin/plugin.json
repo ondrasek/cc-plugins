@@ -3,6 +3,7 @@
   "version": "0.1.1",
   "description": "Intelligent GitHub issue management for Claude Code via gh CLI",
   "author": {
-    "name": "ondrasek"
+    "name": "Ondrej (Ondra) Krajicek",
+    "email": "me@ondrejkrajicek.com"
   }
 }

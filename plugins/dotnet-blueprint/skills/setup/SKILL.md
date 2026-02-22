@@ -3,7 +3,7 @@ name: setup
 description: Analyzes a .NET/C# project and configures 9-dimension quality methodology including hooks, CI, and tool configs. Use when user says "set up quality tools", "configure analyzers", "add CI pipeline", "dotnet quality", or wants to apply coding standards to a .NET project.
 metadata:
   version: 0.2.0
-  author: ondrasek
+  author: Ondrej (Ondra) Krajicek, me@ondrejkrajicek.com
 ---
 
 # Setup

@@ -3,7 +3,7 @@ name: explain
 description: Answers questions about the .NET quality methodology — why tools are chosen, how thresholds work, what each dimension covers, and how hooks interact. Use when user asks "why this analyzer", "what does the quality gate do", "how are thresholds set", or any methodology question.
 metadata:
   version: 0.2.0
-  author: ondrasek
+  author: Ondrej (Ondra) Krajicek, me@ondrejkrajicek.com
 ---
 
 # Explain

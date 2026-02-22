@@ -3,7 +3,7 @@ name: update
 description: Applies incremental methodology updates to a Rust project previously configured with rust-blueprint. Use when user says "update quality tools", "upgrade methodology", "sync with latest blueprint", or after updating the plugin to get new tool recommendations and configs.
 metadata:
   version: 0.2.0
-  author: ondrasek
+  author: Ondrej (Ondra) Krajicek, me@ondrejkrajicek.com
 ---
 
 # Update
