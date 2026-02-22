@@ -27,6 +27,39 @@ plugins/
 plans/                           — Development phase documentation
 ```
 
+## Skill Writing Guidelines
+
+When creating or modifying skills in this repo, **always research the latest Anthropic skill-writing guidelines** before making changes. The guidelines evolve — do not rely on cached knowledge.
+
+### Required research before writing/editing skills
+
+1. **WebSearch** for the latest Anthropic skill documentation: search for `"Anthropic Claude skills best practices"` and `"Claude Code skills documentation"` on `docs.anthropic.com` and `anthropic.com`
+2. **Read the official guide**: [The Complete Guide to Building Skills for Claude](https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf)
+3. **Check the docs**: [Agent Skills Quickstart](https://docs.anthropic.com/en/docs/agents-and-tools/agent-skills/quickstart)
+
+### Key rules from the official guide
+
+- **SKILL.md naming**: Must be exactly `SKILL.md` (case-sensitive). No variations.
+- **Skill folder naming**: kebab-case only, no spaces, no underscores, no capitals.
+- **No README.md inside skill folders** — all documentation goes in SKILL.md or `references/`.
+- **YAML frontmatter**: `name` (kebab-case, required) + `description` (required, under 1024 chars, must include what it does AND when to use it with trigger phrases). No XML angle brackets. No "claude" or "anthropic" in name.
+- **Progressive disclosure** (3 levels): frontmatter (always loaded) -> SKILL.md body (loaded on invocation) -> `references/` and `templates/` (loaded on demand)
+- **Description formula**: `[What it does] + [When to use it] + [Key capabilities]`
+- **Keep SKILL.md under 5,000 words** — move detailed docs to `references/`
+- **Be specific and actionable** in instructions, not vague. Use bullet points and numbered lists.
+- **Put critical instructions at the top** using `## Critical Rules` or `## Important`
+- **Include error handling** and troubleshooting sections
+- **Include examples** of common scenarios and expected outcomes
+
+### Reference documents
+
+- [The Complete Guide to Building Skills for Claude (PDF)](https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf)
+- [Claude Code Best Practices](https://www.anthropic.com/engineering/claude-code-best-practices)
+- [Equipping Agents for the Real World with Agent Skills](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills)
+- [Introducing Agent Skills](https://www.anthropic.com/news/skills)
+- [Agent Skills Quickstart (docs)](https://docs.anthropic.com/en/docs/agents-and-tools/agent-skills/quickstart)
+- [Public skills repository (GitHub)](https://github.com/anthropics/skills)
+
 ## Working on This Repo
 
 ### Testing a plugin locally
