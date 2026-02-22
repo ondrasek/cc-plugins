@@ -1,15 +1,2 @@
 {
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": ".claude/scripts/auto-commit.sh",
-            "timeout": 30
-          }
-        ]
-      }
-    ]
-  }
 }
