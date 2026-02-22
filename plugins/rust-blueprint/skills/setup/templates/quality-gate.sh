@@ -47,6 +47,7 @@ TOOL_HINTS=(
     [cargo-doc]="Add documentation comments (///) to the reported public items. Each public function, struct, enum, and trait should have a doc comment explaining its purpose."
     [wasm-build]="The WASM build failed. Check for platform-specific code that doesn't compile for wasm32. Use cfg attributes to gate platform-specific sections: #[cfg(not(target_arch = \"wasm32\"))]."
     [wasm-test]="Read the failing WASM test. Run 'wasm-pack test --node' or 'wasm-pack test --headless --chrome' to see the full output. Fix the source code to work correctly in the WASM environment."
+    [semver-format]="The version string in ${VERSION_FILE} does not follow semver 2.0 format (MAJOR.MINOR.PATCH[-prerelease][+build]). Read ${VERSION_FILE} and fix the version field to match semver 2.0. See https://semver.org for the specification."
 )
 
 fail() {
@@ -108,6 +109,15 @@ run_check        "cargo-doc"      cargo doc ${WORKSPACE_FLAG} --no-deps 2>&1 | g
 # run_check      "wasm-build"     cargo build --target ${WASM_TARGETS}
 # [check:wasm-test]
 # run_check      "wasm-test"      wasm-pack test --node
+
+# [check:semver-format]
+CURRENT_VERSION=$(${VERSION_EXTRACT_CMD} 2>/dev/null)
+if [ -n "$CURRENT_VERSION" ]; then
+    SEMVER_RE='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-([0-9A-Za-z-]+\.)*[0-9A-Za-z-]+)?(\+([0-9A-Za-z-]+\.)*[0-9A-Za-z-]+)?$'
+    if ! echo "$CURRENT_VERSION" | grep -qE "$SEMVER_RE"; then
+        fail "semver-format" "${VERSION_EXTRACT_CMD}" "Version '${CURRENT_VERSION}' is not valid semver 2.0."
+    fi
+fi
 
 debuglog "=== ALL CHECKS PASSED ==="
 exit 0

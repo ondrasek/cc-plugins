@@ -154,6 +154,28 @@ This checklist defines what the setup skill must analyze in a target codebase be
 
 ---
 
+## 10. Version & Packaging
+
+**Check for**:
+- [ ] `Cargo.toml` → `package.version` field
+- [ ] Workspace root `Cargo.toml` → `workspace.package.version`
+- [ ] Member `Cargo.toml` → `version.workspace = true` (inherits from workspace)
+- [ ] `Cargo.toml` → `publish = false` or `publish = []` (not published to crates.io)
+- [ ] `Cargo.toml` → `[package.metadata]` with publishing-related keys
+- [ ] Multiple crates with independent versions (workspace without `version.workspace`)
+
+**Impact**: Determines Dimension 9 activation level:
+| Signal | Activation |
+|--------|-----------|
+| No version field | Dimension skipped |
+| Version field + `publish = false` | Format validation only (quality gate) |
+| Version field + published (no `publish = false`) | Format validation + bump enforcement |
+| `version.workspace = true` | Check workspace root version |
+
+**Record**: Version source, version value, publish status, workspace inheritance.
+
+---
+
 ## Analysis Output Format
 
 After analysis, the setup skill should produce a structured summary:

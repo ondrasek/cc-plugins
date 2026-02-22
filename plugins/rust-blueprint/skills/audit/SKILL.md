@@ -1,6 +1,6 @@
 ---
 name: audit
-description: Read-only gap analysis comparing a Rust project's current quality setup against the 8-dimension methodology. Use when user says "audit quality", "check coverage gaps", "what's missing", or wants to see how their project measures up before running setup.
+description: Read-only gap analysis comparing a Rust project's current quality setup against the 9-dimension methodology. Use when user says "audit quality", "check coverage gaps", "what's missing", or wants to see how their project measures up before running setup.
 metadata:
   version: 0.1.0
   author: ondrasek
@@ -14,7 +14,7 @@ Read-only — does not modify any files.
 
 Read these files from the plugin before starting:
 
-- `skills/setup/methodology.md` — the 8 quality dimensions (roles) to audit against
+- `skills/setup/methodology.md` — the 9 quality dimensions (roles) to audit against
 - `skills/setup/analysis-checklist.md` — what to check in the target codebase
 
 ## Workflow
@@ -30,7 +30,7 @@ Follow the same analysis steps as the setup skill (Phase 1 of `skills/setup/SKIL
 
 ### 2. Compare Against Methodology
 
-For each of the 8 quality dimensions from `methodology.md`, check whether the role is filled by any tool:
+For each of the 9 quality dimensions from `methodology.md`, check whether the role is filled by any tool:
 
 1. **Testing & Coverage** — Is there a test suite? Is coverage measured? What's the threshold?
 2. **Linting & Formatting** — Is clippy configured? Is rustfmt configured? Are lint levels set?
@@ -40,6 +40,7 @@ For each of the 8 quality dimensions from `methodology.md`, check whether the ro
 6. **Dead Code & Modernization** — Are dead code lints at deny level? Is `cargo-machete` used?
 7. **Documentation** — Is `missing_docs` lint enabled? Does `cargo doc` build cleanly?
 8. **Architecture** — Is dependency hygiene checked? Are duplicate crate versions monitored?
+9. **Version Discipline** — Is there a `package.version`? Is the version semver 2.0? Is bump enforcement configured for published crates?
 
 ### 3. Check Hook Coverage
 
@@ -48,6 +49,7 @@ Verify Claude Code hooks are configured for each hook event from `methodology.md
 - PostToolUse (Edit|Write) → per-edit auto-format (`cargo fmt`)
 - Stop → quality gate (all enabled dimensions)
 - Stop → auto-commit (optional)
+- PostToolUse (Bash) → semver bump enforcement (blocking, only if Dimension 9 active)
 
 ### 4. Check CI Coverage
 
@@ -57,6 +59,7 @@ Verify CI pipeline has a job for each enabled dimension:
 - security (audit + deny)
 - deadcode (machete)
 - wasm (if WASM targets detected)
+- version (semver format check)
 
 ### 5. Report
 
@@ -76,6 +79,7 @@ Present findings in a structured format:
 | Dead Code | Partial | compiler | No cargo-machete for deps |
 | Documentation | Missing | — | missing_docs not enabled |
 | Architecture | Missing | — | No dependency hygiene checking |
+| Version Discipline | Missing | — | No version validation configured |
 
 ### Hook Coverage
 - [x] PostToolUse (per-edit fix)

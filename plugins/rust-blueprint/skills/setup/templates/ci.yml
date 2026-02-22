@@ -72,6 +72,17 @@ jobs:
       - run: cargo install cargo-machete
       - run: cargo machete
 
+  # Dimension 9: Version Discipline
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          VERSION=$(${VERSION_EXTRACT_CMD})
+          echo "Detected version: $VERSION"
+          echo "$VERSION" | grep -qE '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-([0-9A-Za-z-]+\.)*[0-9A-Za-z-]+)?(\+([0-9A-Za-z-]+\.)*[0-9A-Za-z-]+)?$' || { echo "ERROR: Version '$VERSION' is not valid semver 2.0"; exit 1; }
+          echo "Version is valid semver 2.0"
+
   # [job:wasm] — uncomment if WASM targets detected
   # wasm:
   #   runs-on: ubuntu-latest

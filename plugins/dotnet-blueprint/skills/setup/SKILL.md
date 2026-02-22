@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Analyzes a .NET/C# project and configures 8-dimension quality methodology including hooks, CI, and tool configs. Use when user says "set up quality tools", "configure analyzers", "add CI pipeline", "dotnet quality", or wants to apply coding standards to a .NET project.
+description: Analyzes a .NET/C# project and configures 9-dimension quality methodology including hooks, CI, and tool configs. Use when user says "set up quality tools", "configure analyzers", "add CI pipeline", "dotnet quality", or wants to apply coding standards to a .NET project.
 metadata:
   version: 0.1.0
   author: ondrasek
@@ -39,7 +39,7 @@ Based on the analysis, determine what to configure. Apply adaptation rules from 
 
 **Steps**:
 
-1. **Research and select tools** — For each of the 8 quality dimensions:
+1. **Research and select tools** — For each of the 9 quality dimensions:
    - Check if the project already uses a tool for this role (keep it if so)
    - For unfilled roles, use WebSearch to research current best-in-class .NET tools
    - Consider: .NET version compatibility, framework support, Roslyn analyzer availability, community adoption
@@ -83,6 +83,16 @@ Apply the approved plan. Read each template in `templates/` for the structural p
                "timeout": 60
              }
            ]
+         },
+         {
+           "matcher": "Bash",
+           "hooks": [
+             {
+               "type": "command",
+               "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/semver-check.sh",
+               "timeout": 30
+             }
+           ]
          }
        ],
        "Stop": [
@@ -116,6 +126,7 @@ Apply the approved plan. Read each template in `templates/` for the structural p
    - Matchers are case-sensitive: `Edit|Write` not `edit|write`
 5. **CI pipeline** — One job per enabled dimension. Merge into existing pipeline if present.
 6. **CLAUDE.md** — Create from template or append methodology reference to existing.
+7. **semver-check.sh** (`.claude/hooks/`) — PostToolUse/Bash hook for version bump enforcement. Only created when Dimension 9 is activated at level 3 (version property + packaging intent). Make executable.
 
 Then restore NuGet packages and verify the build.
 

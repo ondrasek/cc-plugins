@@ -67,3 +67,14 @@ jobs:
       - run: dotnet list ${SOLUTION_FILE} package --vulnerable --include-transitive
       # Security analyzer build (setup skill adds specific analyzer packages)
       # - run: dotnet build ${SOLUTION_FILE} --no-restore -warnaserror --verbosity quiet
+
+  # Dimension 9: Version Discipline
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          VERSION=$(${VERSION_EXTRACT_CMD})
+          echo "Detected version: $VERSION"
+          echo "$VERSION" | grep -qE '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-([0-9A-Za-z-]+\.)*[0-9A-Za-z-]+)?(\+([0-9A-Za-z-]+\.)*[0-9A-Za-z-]+)?$' || { echo "ERROR: Version '$VERSION' is not valid semver 2.0"; exit 1; }
+          echo "Version is valid semver 2.0"

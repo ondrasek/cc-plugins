@@ -180,6 +180,29 @@ Systematically examine the target .NET project's ecosystem. Each section corresp
 
 ---
 
+## 10. Version & Packaging
+
+**Check for**:
+- [ ] `.csproj` → `<Version>` element
+- [ ] `.csproj` → `<PackageVersion>` element (overrides Version for NuGet)
+- [ ] `Directory.Build.props` → `<Version>` (centralized versioning)
+- [ ] `.csproj` → `<IsPackable>true</IsPackable>` (NuGet package intent)
+- [ ] `.csproj` → `<GeneratePackageOnBuild>true</GeneratePackageOnBuild>`
+- [ ] `.nuspec` file (legacy NuGet packaging)
+- [ ] `.csproj` → `<VersionPrefix>` and `<VersionSuffix>` (split version fields)
+
+**Impact**: Determines Dimension 9 activation level:
+| Signal | Activation |
+|--------|-----------|
+| No Version property | Dimension skipped |
+| Version property, not packable | Format validation only (quality gate) |
+| Version property + IsPackable/GeneratePackageOnBuild | Format validation + bump enforcement |
+| Centralized in Directory.Build.props | Single check against central file |
+
+**Record**: Version source file, version value, packaging intent, centralized vs per-project.
+
+---
+
 ## Analysis Output Format
 
 Present the analysis as a structured summary:

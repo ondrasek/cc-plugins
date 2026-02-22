@@ -1,6 +1,6 @@
 ---
 name: audit
-description: Read-only gap analysis comparing a Python project's current quality setup against the 8-dimension methodology. Use when user says "audit quality", "check coverage gaps", "what's missing", or wants to see how their project measures up before running setup.
+description: Read-only gap analysis comparing a Python project's current quality setup against the 9-dimension methodology. Use when user says "audit quality", "check coverage gaps", "what's missing", or wants to see how their project measures up before running setup.
 metadata:
   version: 0.2.1
   author: ondrasek
@@ -14,7 +14,7 @@ Read-only — does not modify any files.
 
 Read these files from the plugin before starting:
 
-- `skills/setup/methodology.md` — the 8 quality dimensions (roles) to audit against
+- `skills/setup/methodology.md` — the 9 quality dimensions (roles) to audit against
 - `skills/setup/analysis-checklist.md` — what to check in the target codebase
 
 ## Workflow
@@ -30,7 +30,7 @@ Follow the same analysis steps as the setup skill (Phase 1 of `skills/setup/SKIL
 
 ### 2. Compare Against Methodology
 
-For each of the 8 quality dimensions from `methodology.md`, check whether the role is filled by any tool:
+For each of the 9 quality dimensions from `methodology.md`, check whether the role is filled by any tool:
 
 1. **Testing & Coverage** — Is there a test runner? Is coverage measured? What's the threshold?
 2. **Linting & Formatting** — Is there a linter? A formatter? Is auto-fix configured?
@@ -40,6 +40,7 @@ For each of the 8 quality dimensions from `methodology.md`, check whether the ro
 6. **Dead Code & Modernization** — Is there dead code detection? Modernization checking?
 7. **Documentation** — Is there docstring coverage enforcement? What threshold?
 8. **Architecture** — Is there circular import detection? Import contract enforcement? Dependency hygiene?
+9. **Version Discipline** — Is there a version file? Is the version semver 2.0? Is bump enforcement configured?
 
 ### 3. Check Hook Coverage
 
@@ -47,6 +48,7 @@ Verify Claude Code hooks are configured for each hook event from `methodology.md
 - SessionStart → dependency hygiene check (non-blocking)
 - PostToolUse (Edit|Write) → per-edit auto-fix (lint, format, spelling)
 - Stop → quality gate (all enabled dimensions)
+- PostToolUse (Bash) → semver bump enforcement (blocking, only if Dimension 9 active)
 - Stop → auto-commit (optional)
 
 ### 4. Check CI Coverage
@@ -57,6 +59,7 @@ Verify CI pipeline has a job for each enabled dimension:
 - typecheck (type checker)
 - security (security scanner)
 - deadcode (dead code detector)
+- version (semver format check)
 
 ### 5. Report
 
@@ -76,6 +79,7 @@ Present findings in a structured format:
 | Dead Code | Missing | — | No dead code detection |
 | Documentation | Missing | — | No docstring coverage enforcement |
 | Architecture | Missing | — | No import boundaries or dependency hygiene |
+| Version Discipline | Missing | — | No version validation configured |
 
 ### Hook Coverage
 - [x] PostToolUse (per-edit fix)

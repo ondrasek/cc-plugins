@@ -29,7 +29,7 @@ This skill responds to free-form questions about the methodology. It does not fo
 **"What's the coverage threshold and why?"**
 → Read methodology.md Dimension 1. Explain the 90% default and adaptation rules for different project types.
 
-**"Should I use all 8 dimensions?"**
+**"Should I use all 9 dimensions?"**
 → Read methodology.md Principles (incremental adoption). Explain that projects can start with a subset and add dimensions over time. Reference the audit skill for tracking progress.
 
 **"Why enforce nullable reference types?"**

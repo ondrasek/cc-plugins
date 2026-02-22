@@ -46,6 +46,7 @@ TOOL_HINTS=(
     [dotnet-build-analyzers]="Read the file at the reported line number. The warning/error is from a Roslyn analyzer. Check the rule ID (e.g., CA1234, IDE0001) for guidance. Fix the code pattern or suppress with justification."
     [security-audit]="Run 'dotnet list ${SOLUTION_FILE} package --vulnerable --include-transitive' to see all vulnerable packages. Update the affected package version in Directory.Packages.props or the .csproj file."
     [architecture]="Check the architecture test project for the failing rule. The error shows which dependency violates the declared architecture. Fix by restructuring the code or adjusting the architecture rule if the dependency is intentional."
+    [semver-format]="The version string in ${VERSION_FILE} does not follow semver 2.0 format (MAJOR.MINOR.PATCH[-prerelease][+build]). Read ${VERSION_FILE} and fix the Version element to match semver 2.0. See https://semver.org for the specification."
 )
 
 fail() {
@@ -103,6 +104,15 @@ run_check        "dotnet-format"        dotnet format ${SOLUTION_FILE} --verify-
 run_check        "security-audit"       dotnet list ${SOLUTION_FILE} package --vulnerable --include-transitive
 # [check:architecture]
 # run_check      "architecture"         dotnet test ${TEST_DIR}<arch-test-project> --no-build --verbosity quiet
+
+# [check:semver-format]
+CURRENT_VERSION=$(${VERSION_EXTRACT_CMD} 2>/dev/null)
+if [ -n "$CURRENT_VERSION" ]; then
+    SEMVER_RE='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-([0-9A-Za-z-]+\.)*[0-9A-Za-z-]+)?(\+([0-9A-Za-z-]+\.)*[0-9A-Za-z-]+)?$'
+    if ! echo "$CURRENT_VERSION" | grep -qE "$SEMVER_RE"; then
+        fail "semver-format" "${VERSION_EXTRACT_CMD}" "Version '${CURRENT_VERSION}' is not valid semver 2.0."
+    fi
+fi
 
 debuglog "=== ALL CHECKS PASSED ==="
 exit 0

@@ -29,7 +29,7 @@ Read-only Q&A — answers questions about why specific tools are included, how t
 
 ## Quality Methodology
 
-The plugin applies an 8-dimension quality methodology. Each dimension defines a **role** (what needs to happen), not a specific tool. The setup skill researches and selects the best current tools at runtime.
+The plugin applies a 9-dimension quality methodology. Each dimension defines a **role** (what needs to happen), not a specific tool. The setup skill researches and selects the best current tools at runtime.
 
 | Dimension | Role |
 |-----------|------|

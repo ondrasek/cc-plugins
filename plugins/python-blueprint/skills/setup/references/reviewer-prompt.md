@@ -64,6 +64,14 @@ Review against these criteria:
    skipped dimensions, framework-specific config), verify they were
    actually applied.
 
+10. VERSION DISCIPLINE: If Dimension 9 was activated, verify:
+    - semver-check.sh exists in .claude/hooks/ and is executable
+    - quality-gate.sh has [check:semver-format] block with semver 2.0 regex
+    - settings.json has PostToolUse/Bash hook entry for semver-check.sh
+    - VERSION_FILE and SOURCE_DIRS match the analysis findings
+    - CI pipeline has a version job
+    - If dynamic versioning was detected, verify bump enforcement is skipped
+
 Report your findings as a structured list:
 - PASS items (brief)
 - FAIL items (specific: what's wrong, which file, what it should be)

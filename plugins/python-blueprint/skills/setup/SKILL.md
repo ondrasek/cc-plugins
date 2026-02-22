@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Analyzes a Python project and configures 8-dimension quality methodology including hooks, CI, and tool configs. Use when user says "set up quality tools", "configure linting", "add CI pipeline", "python quality", or wants to apply coding standards to a Python project.
+description: Analyzes a Python project and configures 9-dimension quality methodology including hooks, CI, and tool configs. Use when user says "set up quality tools", "configure linting", "add CI pipeline", "python quality", or wants to apply coding standards to a Python project.
 metadata:
   version: 0.2.1
   author: ondrasek
@@ -39,7 +39,7 @@ Based on the analysis, determine what to configure. Apply adaptation rules from 
 
 **Steps**:
 
-1. **Research and select tools** — For each of the 8 quality dimensions:
+1. **Research and select tools** — For each of the 9 quality dimensions:
    - Check if the project already uses a tool for this role (keep it if so)
    - For unfilled roles, use WebSearch to research current best-in-class Python tools
    - Consider: Python version compatibility, framework support, speed, community adoption, pyproject.toml support
@@ -83,6 +83,16 @@ Apply the approved plan. Read each template in `templates/` for the structural p
                "timeout": 60
              }
            ]
+         },
+         {
+           "matcher": "Bash",
+           "hooks": [
+             {
+               "type": "command",
+               "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/semver-check.sh",
+               "timeout": 30
+             }
+           ]
          }
        ],
        "Stop": [
@@ -119,7 +129,8 @@ Apply the approved plan. Read each template in `templates/` for the structural p
 6. **Type checker config** — Only if the chosen type checker needs a standalone config file.
 7. **`.pre-commit-config.yaml`** — Pre-commit hooks for linter/formatter. Merge if exists.
 8. **CLAUDE.md** — Create from template or append methodology reference to existing.
-9. **(Optional) Style-guide check** — Only if project uses a CLI framework (click, typer).
+9. **semver-check.sh** (`.claude/hooks/`) — PostToolUse/Bash hook for version bump enforcement. Only created when Dimension 9 is activated at level 3 (version file + packaging intent). Make executable.
+10. **(Optional) Style-guide check** — Only if project uses a CLI framework (click, typer).
 
 Then install dev dependencies and pre-commit hooks.
 

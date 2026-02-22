@@ -55,6 +55,7 @@ TOOL_HINTS=(
     [ty]="Read the file at the reported line. Fix type errors — check annotations, return types, and argument types."
     [interrogate]="The reported module or function is missing a docstring. Add a one-line docstring to each flagged public function/class/module."
     [style-guide]="CLI output formatting must follow the style guide: section headings use emoji + click.style(ALL CAPS text, fg=COLOR, bold=True). No ASCII splitter lines."
+    [semver-format]="The version string in ${VERSION_FILE} does not follow semver 2.0 format (MAJOR.MINOR.PATCH[-prerelease][+build]). Read ${VERSION_FILE} and fix the version field to match semver 2.0. See https://semver.org for the specification."
 )
 
 fail() {
@@ -129,6 +130,15 @@ run_check        "ty"             ${PACKAGE_MANAGER_RUN} ty check ${SOURCE_DIR}
 run_check        "interrogate"    ${PACKAGE_MANAGER_RUN} interrogate ${SOURCE_DIR} -v --fail-under ${DOCSTRING_THRESHOLD} -e ${TEST_DIR}
 # [check:style-guide]
 run_check        "style-guide"    "${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/style-guide-check.sh"
+
+# [check:semver-format]
+CURRENT_VERSION=$(${VERSION_EXTRACT_CMD} 2>/dev/null)
+if [ -n "$CURRENT_VERSION" ]; then
+    SEMVER_RE='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-([0-9A-Za-z-]+\.)*[0-9A-Za-z-]+)?(\+([0-9A-Za-z-]+\.)*[0-9A-Za-z-]+)?$'
+    if ! echo "$CURRENT_VERSION" | grep -qE "$SEMVER_RE"; then
+        fail "semver-format" "${VERSION_EXTRACT_CMD}" "Version '${CURRENT_VERSION}' is not valid semver 2.0."
+    fi
+fi
 
 debuglog "=== ALL CHECKS PASSED ==="
 exit 0

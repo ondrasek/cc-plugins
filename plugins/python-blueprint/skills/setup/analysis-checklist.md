@@ -144,6 +144,28 @@ This checklist defines what the setup skill must analyze in a target codebase be
 
 ---
 
+## 10. Version & Packaging
+
+**Check for**:
+- [ ] `pyproject.toml` → `project.version` (PEP 621 static version)
+- [ ] `pyproject.toml` → `tool.poetry.version` (Poetry)
+- [ ] Source file `__version__` (legacy pattern)
+- [ ] `pyproject.toml` → `dynamic = ["version"]` (dynamic versioning — setuptools-scm, hatch-vcs, etc.)
+- [ ] `pyproject.toml` → `[build-system]` with `build-backend` (packaging intent)
+- [ ] `pyproject.toml` → `[project.urls]` containing "pypi" (PyPI publishing intent)
+
+**Impact**: Determines Dimension 9 activation level:
+| Signal | Activation |
+|--------|-----------|
+| No version field | Dimension skipped |
+| Static version, no build-system | Format validation only (quality gate) |
+| Static version + build-system | Format validation + bump enforcement |
+| Dynamic version (`dynamic = ["version"]`) | Format validation only (bump managed by tooling) |
+
+**Record**: Version source, version value, packaging intent, dynamic versioning.
+
+---
+
 ## Analysis Output Format
 
 After analysis, the setup skill should produce a structured summary:

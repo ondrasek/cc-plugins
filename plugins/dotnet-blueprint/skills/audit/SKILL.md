@@ -1,6 +1,6 @@
 ---
 name: audit
-description: Read-only gap analysis comparing a .NET project's current quality setup against the 8-dimension methodology. Use when user says "audit quality", "check coverage gaps", "what's missing", or wants to see how their project measures up before running setup.
+description: Read-only gap analysis comparing a .NET project's current quality setup against the 9-dimension methodology. Use when user says "audit quality", "check coverage gaps", "what's missing", or wants to see how their project measures up before running setup.
 metadata:
   version: 0.1.0
   author: ondrasek
@@ -14,7 +14,7 @@ Read-only — does not modify any files.
 
 Read these files from the plugin before starting:
 
-- `skills/setup/methodology.md` — the 8 quality dimensions (roles) to audit against
+- `skills/setup/methodology.md` — the 9 quality dimensions (roles) to audit against
 - `skills/setup/analysis-checklist.md` — what to check in the target codebase
 
 ## Workflow
@@ -30,7 +30,7 @@ Follow the same analysis steps as the setup skill (Phase 1 of `skills/setup/SKIL
 
 ### 2. Compare Against Methodology
 
-For each of the 8 quality dimensions from `methodology.md`, check whether the role is filled:
+For each of the 9 quality dimensions from `methodology.md`, check whether the role is filled:
 
 1. **Testing & Coverage** — Is there a test framework? Is coverage measured? What's the threshold?
 2. **Linting & Formatting** — Is .editorconfig present? Are Roslyn analyzers configured? Is `dotnet format` used?
@@ -40,6 +40,7 @@ For each of the 8 quality dimensions from `methodology.md`, check whether the ro
 6. **Dead Code & Modernization** — Are IDE analyzers configured for dead code? Modern C# idioms enforced?
 7. **Documentation** — Is CS1591 (missing XML doc) enforced? For which project types?
 8. **Architecture** — Are architecture tests present? Namespace conventions enforced? Dependency hygiene checked?
+9. **Version Discipline** — Is there a `<Version>` property? Is the version semver 2.0? Is bump enforcement configured?
 
 ### 3. Check Hook Coverage
 
@@ -48,6 +49,7 @@ Verify Claude Code hooks are configured for each hook event from `methodology.md
 - PostToolUse (Edit|Write) → per-edit auto-fix (formatting)
 - Stop → quality gate (all enabled dimensions)
 - Stop → auto-commit (optional)
+- PostToolUse (Bash) → semver bump enforcement (blocking, only if Dimension 9 active)
 
 ### 4. Check CI Coverage
 
@@ -56,6 +58,7 @@ Verify CI pipeline has a job for each enabled dimension:
 - lint (format check + analyzers)
 - build (strict analysis, nullable errors)
 - security (NuGet audit + security analyzers)
+- version (semver format check)
 
 ### 5. Report
 
@@ -75,6 +78,7 @@ Present findings in a structured format:
 | Dead Code | Missing | — | IDE analyzers not configured as warnings |
 | Documentation | Missing | — | No XML doc enforcement |
 | Architecture | Missing | — | No architecture tests |
+| Version Discipline | Missing | — | No version validation configured |
 
 ### Hook Coverage
 - [x] PostToolUse (per-edit fix)

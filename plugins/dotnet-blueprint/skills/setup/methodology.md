@@ -1,6 +1,6 @@
 # .NET Quality Methodology
 
-This document defines the quality methodology applied by the `dotnet-blueprint` plugin. It is organized into 8 quality dimensions, each defining a **role** (what needs to happen) rather than prescribing specific tools.
+This document defines the quality methodology applied by the `dotnet-blueprint` plugin. It is organized into 9 quality dimensions, each defining a **role** (what needs to happen) rather than prescribing specific tools.
 
 The setup skill reads this document to understand what to apply, then researches current best-in-class tools to fill each role.
 
@@ -203,6 +203,44 @@ Architecture tests are never configured speculatively. The quality gate drives t
 
 ---
 
+## Dimension 9: Version Discipline
+
+**Role**: Enforce semver 2.0 on the project's version string. Detect missing version bumps when source code changes are committed.
+
+**What the tools must do**:
+- Validate the project's version string follows semver 2.0 format (MAJOR.MINOR.PATCH with optional pre-release and build metadata)
+- On commit, compare the version at the branch base vs HEAD — block if source files changed but the version did not
+
+**Progressive activation**:
+
+Version discipline is never configured speculatively. The quality gate drives its introduction:
+
+1. **No version property detected**: the dimension is skipped entirely. Most internal applications start here.
+2. **Version property exists, no packaging intent**: format validation only (quality gate). Catches typos and non-semver strings.
+3. **Version property + packaging intent**: both format validation (quality gate) AND bump enforcement (PostToolUse/Bash hook on `git commit`).
+
+Detection signals for .NET:
+- **Version property**: `<Version>` in `.csproj` or `Directory.Build.props`; `<PackageVersion>` override
+- **Packaging intent**: `<IsPackable>true</IsPackable>`, `<GeneratePackageOnBuild>true</GeneratePackageOnBuild>`, `.nuspec` file
+- **Centralized versioning**: `<Version>` in `Directory.Build.props` → single version source for the solution
+
+**Default configuration**:
+- Semver 2.0 regex validation in the quality gate
+- PostToolUse/Bash hook (`semver-check.sh`) that fires only on `git commit`
+
+**Adaptation**:
+- Multi-project solution with per-project versions: one check per packable project
+- Centralized versioning (`Directory.Build.props`): single check against the central file
+- Non-packable projects (`<IsPackable>false</IsPackable>`): skip bump enforcement, keep format validation
+
+**Quality gate**: Validate version string matches semver 2.0 regex.
+
+**PostToolUse/Bash hook**: On `git commit`, compare version at merge-base vs HEAD. Block if source dirs changed but version is unchanged.
+
+**CI job**: `version` — extract and validate version string format.
+
+---
+
 ## Hook Architecture
 
 The methodology uses four hook types:
@@ -213,6 +251,7 @@ The methodology uses four hook types:
 | **PostToolUse** (Edit\|Write) | `per-edit-fix.sh` | Auto-fix formatting on each C# file edit | Yes (exit 2 for unfixable) |
 | **Stop** | `quality-gate.sh` | Full quality gate (all enabled dimensions) | Yes (exit 2 → Claude fixes) |
 | **Stop** | `auto-commit.sh` | Auto-commit and push if quality gate passes | No (push failure is non-blocking) |
+| **PostToolUse** (Bash) | `semver-check.sh` | Block commits where source changed but version was not bumped | Yes (exit 2 for unbumped) |
 
 ### Fail-Fast Design
 
@@ -324,6 +363,7 @@ The CI pipeline runs a subset of the quality gate as parallel jobs:
 | `lint` | Linting & Formatting | Verify formatting and analyzer rules |
 | `build` | Type Safety + Dead Code | Build with strict analysis |
 | `security` | Security Analysis | NuGet audit + security analyzers |
+| `version` | Version Discipline | Verify semver format |
 
 Jobs run on `push` to main and on pull requests to main.
 
@@ -373,7 +413,7 @@ Prefer Roslyn analyzers over external CLI tools when available:
 
 ## Claude Code Hygiene
 
-These checks target the Claude Code development environment itself — project instructions, hooks, and agent configuration. Unlike the 8 code quality dimensions, these ensure the AI-assisted workflow is correctly set up and efficient.
+These checks target the Claude Code development environment itself — project instructions, hooks, and agent configuration. Unlike the 9 code quality dimensions, these ensure the AI-assisted workflow is correctly set up and efficient.
 
 **Sources**: Boris Cherny (creator of Claude Code) internal workflow recommendations; official Anthropic Claude Code best practices.
 

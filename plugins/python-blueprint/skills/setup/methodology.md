@@ -1,6 +1,6 @@
 # Python Quality Methodology
 
-This document defines the quality methodology applied by the `python-blueprint` plugin. It is organized into 8 quality dimensions, each defining a **role** (what needs to happen) rather than prescribing specific tools.
+This document defines the quality methodology applied by the `python-blueprint` plugin. It is organized into 9 quality dimensions, each defining a **role** (what needs to happen) rather than prescribing specific tools.
 
 The setup skill reads this document to understand what to apply, then researches current best-in-class tools to fill each role.
 
@@ -201,6 +201,44 @@ This means a single-module project or a new project never sees import linting �
 
 ---
 
+## Dimension 9: Version Discipline
+
+**Role**: Enforce semver 2.0 on the project's version string. Detect missing version bumps when source code changes are committed.
+
+**What the tools must do**:
+- Validate the project's version string follows semver 2.0 format (MAJOR.MINOR.PATCH with optional pre-release and build metadata)
+- On commit, compare the version at the branch base vs HEAD — block if source files changed but the version did not
+
+**Progressive activation**:
+
+Version discipline is never configured speculatively. The quality gate drives its introduction:
+
+1. **No version file detected**: the dimension is skipped entirely. Most scripts and internal tools start here.
+2. **Version file exists, no packaging intent**: format validation only (quality gate). Catches typos and non-semver strings.
+3. **Version file + packaging intent**: both format validation (quality gate) AND bump enforcement (PostToolUse/Bash hook on `git commit`).
+
+Detection signals for Python:
+- **Version file**: `pyproject.toml` with `project.version` or `tool.poetry.version`; `__version__` in source
+- **Packaging intent**: `[build-system]` section with `build-backend`, `tool.poetry.packages`, `[project.urls]` with PyPI link
+- **Dynamic versioning**: `dynamic = ["version"]` → skip bump enforcement (version is managed by the build system, e.g., `setuptools-scm`, `hatch-vcs`)
+
+**Default configuration**:
+- Semver 2.0 regex validation in the quality gate
+- PostToolUse/Bash hook (`semver-check.sh`) that fires only on `git commit`
+
+**Adaptation**:
+- Dynamic versioning (`setuptools-scm`, `hatch-vcs`): skip bump enforcement, keep format validation
+- Monorepo with multiple packages: one check per package version
+- Pre-1.0 project: no special treatment — semver pre-release tags handle instability
+
+**Quality gate**: Validate version string matches semver 2.0 regex.
+
+**PostToolUse/Bash hook**: On `git commit`, compare version at merge-base vs HEAD. Block if source dirs changed but version is unchanged.
+
+**CI job**: `version` — extract and validate version string format.
+
+---
+
 ## Hook Architecture
 
 The methodology uses four hook types:
@@ -211,6 +249,7 @@ The methodology uses four hook types:
 | **PostToolUse** (Edit\|Write) | `per-edit-fix.sh` | Auto-fix lint, format, spelling on each Python file edit | Yes (exit 2 for unfixable) |
 | **Stop** | `quality-gate.sh` | Full quality gate (all enabled dimensions) | Yes (exit 2 → Claude fixes) |
 | **Stop** | `auto-commit.sh` | Auto-commit and push if quality gate passes | No (push failure is non-blocking) |
+| **PostToolUse** (Bash) | `semver-check.sh` | Block commits where source changed but version was not bumped | Yes (exit 2 for unbumped) |
 
 ### Fail-Fast Design
 
@@ -327,6 +366,7 @@ The CI pipeline runs a subset of the quality gate as parallel jobs:
 | `typecheck` | Type Safety | Verify types |
 | `security` | Security Analysis | Verify safety |
 | `deadcode` | Dead Code | Verify no dead code |
+| `version` | Version Discipline | Verify semver format |
 
 Jobs run on `push` to main and on pull requests to main.
 
@@ -360,7 +400,7 @@ This is an optional check, only enabled when a CLI framework is detected.
 
 ## Claude Code Hygiene
 
-These checks target the Claude Code development environment itself — project instructions, hooks, and agent configuration. Unlike the 8 code quality dimensions, these ensure the AI-assisted workflow is correctly set up and efficient.
+These checks target the Claude Code development environment itself — project instructions, hooks, and agent configuration. Unlike the 9 code quality dimensions, these ensure the AI-assisted workflow is correctly set up and efficient.
 
 **Sources**: Boris Cherny (creator of Claude Code) internal workflow recommendations; official Anthropic Claude Code best practices.
 
