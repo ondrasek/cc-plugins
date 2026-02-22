@@ -24,6 +24,9 @@ plugins/
     skills/                      — setup, audit, update, explain
     hooks/hooks.json             — Plugin-level hook registrations
     scripts/per-edit-fix.sh      — Plugin-level per-edit auto-fix
+  github-issues/                 — GitHub issue management utility plugin
+    .claude-plugin/plugin.json   — Plugin manifest
+    skills/                      — triage, manage, refine, develop, organize
 plans/                           — Development phase documentation
 ```
 
@@ -137,3 +140,28 @@ Each dimension defines a role. The setup skill researches and selects the best c
 - clippy preferred as the single linter (covers style, correctness, performance, complexity)
 - WASM target detection and adaptation (wasm-pack, wasm-bindgen, wasm32-* targets)
 - Same hook architecture: fail-fast quality gate, per-edit auto-fix, session-start hygiene
+
+## github-issues Plugin
+
+### Key files to understand
+
+- `plugins/github-issues/skills/shared/references/cross-cutting.md` — the intellectual core: 3 cross-cutting behaviors (issue relationships, comments, labels) that all skills must follow
+- `plugins/github-issues/skills/shared/references/label-taxonomy.md` — label naming conventions and category definitions
+- `plugins/github-issues/skills/refine/references/` — epic, user story, and splitting technique guides
+
+### Conventions
+
+- **Utility plugin** — no hooks, no scripts. All operations are user-initiated via skills.
+- **`gh` CLI everywhere** — all operations use `gh` commands with `--json` for structured output
+- **Cross-cutting behaviors** are documented once in `skills/shared/references/` and referenced from every SKILL.md
+- **NEVER create priority labels** — explicit user requirement, enforced across all skills
+- **Sub-issues for epic decomposition** — uses GitHub's native sub-issue support (`--add-parent`)
+- **Comments explain "why"** — every significant change gets a comment providing context
+
+### Skills (5)
+
+1. **triage** — read-only querying, viewing, and status dashboard
+2. **manage** — CRUD lifecycle, batch operations, label management
+3. **refine** — progressive refinement: rough ideas → epics → user stories (INVEST, SPIDR)
+4. **develop** — issue → branch → PR workflow bridge
+5. **organize** — lock, unlock, pin, unpin, transfer

@@ -1,0 +1,43 @@
+# github-issues
+
+Intelligent GitHub issue management for Claude Code via the `gh` CLI.
+
+## What It Does
+
+Gives Claude Code natural language access to GitHub issues — querying, creating, refining, and managing issues with codebase awareness, relationship tracking, and best-practice issue structures.
+
+## Prerequisites
+
+- [GitHub CLI](https://cli.github.com) (`gh`) installed and authenticated (`gh auth login`)
+
+## Skills
+
+| Skill | Trigger examples | What it does |
+|-------|-----------------|--------------|
+| **triage** | "show my issues", "what's assigned to me", "summarize issue #42" | Query and inspect issues with natural language |
+| **manage** | "create an issue", "file a bug", "close issue #42", "add labels" | Full CRUD lifecycle with codebase context |
+| **refine** | "refine issue #42", "make this an epic", "split into stories" | Progressive refinement: rough ideas → epics → user stories (INVEST) |
+| **develop** | "start working on issue #42", "create a branch" | Bridge issues to development workflow |
+| **organize** | "lock issue", "pin this", "transfer to another repo" | Administrative operations |
+
+## Cross-Cutting Behaviors
+
+All skills automatically:
+
+- **Search for related issues** before creating or editing
+- **Add comments** explaining changes with context
+- **Respect label conventions** — check existing labels first, follow `category: value` naming, never create priority labels
+
+## Installation
+
+```bash
+# From the cc-plugins marketplace
+/plugin install github-issues@cc-plugins
+```
+
+## Local Development
+
+```bash
+cd /path/to/your-project
+claude --plugin-dir /path/to/cc-plugins/plugins/github-issues
+```

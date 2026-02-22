@@ -18,6 +18,11 @@
       "name": "rust-blueprint",
       "source": "./plugins/rust-blueprint",
       "description": "Intelligent Rust quality methodology plugin for Claude Code"
+    },
+    {
+      "name": "github-issues",
+      "source": "./plugins/github-issues",
+      "description": "Intelligent GitHub issue management for Claude Code via gh CLI"
     }
   ]
 }

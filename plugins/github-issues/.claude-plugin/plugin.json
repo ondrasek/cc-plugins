@@ -1,0 +1,8 @@
+{
+  "name": "github-issues",
+  "version": "0.1.0",
+  "description": "Intelligent GitHub issue management for Claude Code via gh CLI",
+  "author": {
+    "name": "ondrasek"
+  }
+}
