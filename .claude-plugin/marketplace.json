@@ -23,6 +23,11 @@
       "name": "github-issues",
       "source": "./plugins/github-issues",
       "description": "Intelligent GitHub issue management for Claude Code via gh CLI"
+    },
+    {
+      "name": "github-releases",
+      "source": "./plugins/github-releases",
+      "description": "Intelligent GitHub release management for Claude Code via gh CLI"
     }
   ]
 }

@@ -1,0 +1,9 @@
+{
+  "name": "github-releases",
+  "version": "0.1.0",
+  "description": "Intelligent GitHub release management for Claude Code via gh CLI",
+  "author": {
+    "name": "Ondrej (Ondra) Krajicek",
+    "email": "me@ondrejkrajicek.com"
+  }
+}
