@@ -32,7 +32,12 @@
     {
       "name": "git-auto-commit",
       "source": "./plugins/git-auto-commit",
-      "description": "Auto-commit and push changes when Claude stops"
+      "description": "Fail-fast cascade checker — enforces staging, version bumps, conventional commits, and push via Stop hook"
+    },
+    {
+      "name": "auto-release",
+      "source": "./plugins/auto-release",
+      "description": "Automated semantic versioning and GitHub releases from conventional commits"
     }
   ]
 }

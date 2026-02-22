@@ -1,0 +1,160 @@
+# Automated Release Workflow
+# Triggers on push to main, analyzes conventional commits since last tag,
+# determines version bump, creates GitHub release with categorized notes.
+#
+# Requirements:
+#   - Conventional commit messages (feat:, fix:, etc.)
+#   - GITHUB_TOKEN with contents:write permission
+#   - No additional secrets needed
+#
+# Customization points:
+#   - TAG_PREFIX: change from "v" to "" or custom prefix
+#   - INITIAL_VERSION: first version if no tags exist
+#   - Branch trigger: change "main" to your default branch
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history needed for tag detection
+
+      - name: Determine version bump
+        id: version
+        run: |
+          TAG_PREFIX="v"
+          INITIAL_VERSION="0.1.0"
+
+          # Find latest tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          if [ -z "$LATEST_TAG" ]; then
+            echo "new_version=${TAG_PREFIX}${INITIAL_VERSION}" >> "$GITHUB_OUTPUT"
+            echo "first_release=true" >> "$GITHUB_OUTPUT"
+            echo "No previous tags found. First release: ${TAG_PREFIX}${INITIAL_VERSION}"
+            exit 0
+          fi
+
+          echo "latest_tag=${LATEST_TAG}" >> "$GITHUB_OUTPUT"
+
+          # Strip prefix to get version numbers
+          VERSION="${LATEST_TAG#${TAG_PREFIX}}"
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          PATCH=$(echo "$VERSION" | cut -d. -f3)
+
+          # Parse commits since last tag
+          COMMITS=$(git log "${LATEST_TAG}..HEAD" --format="%s" --no-merges)
+
+          if [ -z "$COMMITS" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "No new commits since ${LATEST_TAG}. Skipping release."
+            exit 0
+          fi
+
+          # Determine bump type (highest wins: major > minor > patch)
+          BUMP="patch"
+          while IFS= read -r MSG; do
+            # Check for breaking changes
+            if echo "$MSG" | grep -qE '^[a-z]+(\([a-zA-Z0-9._-]+\))?!:' || \
+               echo "$MSG" | grep -qiE 'BREAKING.CHANGE:'; then
+              BUMP="major"
+              break
+            fi
+            # Check for features
+            if echo "$MSG" | grep -qE '^feat(\([a-zA-Z0-9._-]+\))?:'; then
+              BUMP="minor"
+            fi
+          done <<< "$COMMITS"
+
+          # Calculate new version
+          case "$BUMP" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+
+          NEW_VERSION="${TAG_PREFIX}${MAJOR}.${MINOR}.${PATCH}"
+          echo "new_version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "bump=${BUMP}" >> "$GITHUB_OUTPUT"
+          echo "Version bump: ${BUMP} → ${NEW_VERSION}"
+
+      - name: Generate release notes
+        id: notes
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          LATEST_TAG="${{ steps.version.outputs.latest_tag }}"
+          FIRST_RELEASE="${{ steps.version.outputs.first_release }}"
+
+          if [ "$FIRST_RELEASE" = "true" ]; then
+            RANGE="HEAD"
+          else
+            RANGE="${LATEST_TAG}..HEAD"
+          fi
+
+          # Categorize commits
+          BREAKING=""
+          FEATURES=""
+          FIXES=""
+          OTHER=""
+
+          while IFS= read -r MSG; do
+            [ -z "$MSG" ] && continue
+
+            if echo "$MSG" | grep -qE '^[a-z]+(\([a-zA-Z0-9._-]+\))?!:' || \
+               echo "$MSG" | grep -qiE 'BREAKING.CHANGE:'; then
+              BREAKING="${BREAKING}- ${MSG}\n"
+            elif echo "$MSG" | grep -qE '^feat(\([a-zA-Z0-9._-]+\))?:'; then
+              FEATURES="${FEATURES}- ${MSG}\n"
+            elif echo "$MSG" | grep -qE '^fix(\([a-zA-Z0-9._-]+\))?:'; then
+              FIXES="${FIXES}- ${MSG}\n"
+            else
+              OTHER="${OTHER}- ${MSG}\n"
+            fi
+          done < <(git log "${RANGE}" --format="%s" --no-merges)
+
+          # Build release notes
+          NOTES=""
+          if [ -n "$BREAKING" ]; then
+            NOTES="${NOTES}## Breaking Changes\n\n${BREAKING}\n"
+          fi
+          if [ -n "$FEATURES" ]; then
+            NOTES="${NOTES}## Features\n\n${FEATURES}\n"
+          fi
+          if [ -n "$FIXES" ]; then
+            NOTES="${NOTES}## Fixes\n\n${FIXES}\n"
+          fi
+          if [ -n "$OTHER" ]; then
+            NOTES="${NOTES}## Other Changes\n\n${OTHER}\n"
+          fi
+
+          # Write to file for the release step
+          printf '%b' "$NOTES" > release-notes.md
+          echo "Generated release notes:"
+          cat release-notes.md
+
+      - name: Create release
+        if: steps.version.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.new_version }}"
+
+          # Create annotated tag
+          git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION"
+          git push origin "$NEW_VERSION"
+
+          # Create GitHub release
+          gh release create "$NEW_VERSION" \
+            --title "$NEW_VERSION" \
+            --notes-file release-notes.md

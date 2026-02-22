@@ -1,0 +1,9 @@
+{
+  "name": "auto-release",
+  "version": "0.1.0",
+  "description": "Automated semantic versioning and GitHub releases from conventional commits",
+  "author": {
+    "name": "Ondrej (Ondra) Krajicek",
+    "email": "me@ondrejkrajicek.com"
+  }
+}

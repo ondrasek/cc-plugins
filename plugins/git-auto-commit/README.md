@@ -1,40 +1,48 @@
 # git-auto-commit
 
-Auto-commit and push all changes when Claude stops.
+Fail-fast cascade checker that enforces git hygiene when Claude stops. Instead of auto-committing, it detects issues one at a time and instructs Claude to resolve them.
 
-## What It Does
+## How It Works
 
-Registers a **Stop** hook that fires every time Claude finishes a turn. The hook:
+Each time Claude stops, the hook runs a cascade of checks. It blocks on the **first** issue found (exit 2), giving Claude actionable instructions. When Claude resolves it and stops again, the hook progresses to the next check:
 
-1. Checks for uncommitted changes — exits silently if the working tree is clean
-2. Stages everything (`git add -A`)
-3. Enforces **version-bump checks** — if any plugin's files changed but its `plugin.json` version wasn't bumped, the commit is blocked and Claude is told to fix it
-4. Generates a commit message using `claude -p --model haiku` (falls back to a file-list summary)
-5. Commits with `--no-gpg-sign` and pushes to origin
+```
+Stop → Check 1: Remote changes?      → "Pull/merge from remote"
+Stop → Check 2: Untracked/modified?   → "Stage your files"
+Stop → Check 3: Plugin version bumps? → "Bump versions"
+Stop → Check 4: Staged uncommitted?   → "Commit with conventional message"
+Stop → Check 5: Unpushed commits?     → "Push to remote"
+Stop → All clean                      → exit 0
+```
+
+## Cascade Checks
+
+| # | Check | What it detects | Action for Claude |
+|---|-------|-----------------|-------------------|
+| 1 | Remote changes | Branch behind or diverged from upstream | Pull or rebase |
+| 2 | Unstaged changes | Untracked or modified files | Review and stage deliberately |
+| 3 | Version bumps | Plugin files changed without version bump | Bump semver in plugin.json |
+| 4 | Uncommitted staged | Staged files not yet committed | Commit using conventional format |
+| 5 | Unpushed commits | Local commits not pushed to remote | Push to origin |
+
+## Key Design Decisions
+
+- **Claude stages files** — no more `git add -A`. Claude reviews each file and decides what to stage or gitignore.
+- **Claude writes commit messages** — no more haiku subprocess. The hook provides conventional commit format reference inline.
+- **Claude pushes** — no more auto-push. Claude gets explicit push instructions.
+- **Fail-fast** — one issue at a time, resolved before progressing.
 
 ## Prerequisites
 
 - **git** — initialized repo with a remote named `origin`
-- **Claude CLI** (`claude`) — used for commit message generation
 - **jq** — used for version-bump checks on `plugin.json` files
 
-## How It Works
-
-| Hook | Event | Blocking? | Timeout | What it does |
-|------|-------|-----------|---------|--------------|
-| **auto-commit** | Stop | Yes (exit 2 on failure) | 120s | Stage, commit, and push changes |
-
-### Re-entrancy Guard
-
-The script sets `CLAUDE_HOOK_RUNNING=1` to prevent infinite loops — if Claude restarts in response to hook output, the hook exits immediately.
-
-### Exit Codes
+## Exit Codes
 
 | Code | Meaning |
 |------|---------|
-| `0` | Success (committed and pushed, or nothing to do) |
-| `0` | Push failed (non-blocking — warns but doesn't retry) |
-| `2` | Commit failed or version bump required (blocks — feeds error back to Claude) |
+| `0` | All checks passed (working tree clean, everything pushed) |
+| `2` | Action needed — structured error message fed back to Claude |
 
 ## Installation
 
