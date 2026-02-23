@@ -27,7 +27,11 @@ Then install individual plugins:
 | [github-releases](plugins/github-releases/) | Intelligent GitHub release management — version detection, conventional commit analysis, release notes generation |
 | [git-auto-commit](plugins/git-auto-commit/) | Fail-fast cascade checker — enforces staging, version bumps, conventional commits, and push via Stop hook |
 | [auto-release](plugins/auto-release/) | Automated semantic versioning and GitHub releases from conventional commits |
-| [python-quality-gate](plugins/python-quality-gate/) | Fail-fast Python quality gate — 14 checks (tests, coverage, linting, types, security, complexity, dead code, imports, docs) via Stop hook |
+## Standalone Scripts
+
+| Script | Description |
+|--------|-------------|
+| [python-quality-gate](plugins/python-quality-gate/) | Fail-fast Python quality gate — 14 checks via Stop hook. Not a plugin due to [Claude Code plugin hook bugs](https://github.com/anthropics/claude-code/issues/11509). Install as a project-level hook pointing to the [canonical gist](https://gist.github.com/ondrasek/f796e3c3321fe0033845994f5406eb0d); the script self-updates via ETag. |
 
 ## Local Development
 

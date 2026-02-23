@@ -5,10 +5,19 @@
 #
 # Repo-agnostic: scans all Python code in the repository. Each tool uses its
 # own config (pyproject.toml, pyrightconfig.json, etc.) for includes/excludes.
+#
+# Self-updating: checks a canonical GitHub gist for newer versions using ETags.
+# The .etag file is committed alongside this script as a version lock.
 
 set -o pipefail
 
 cd "$CLAUDE_PROJECT_DIR" || exit 0
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_PATH="${SCRIPT_DIR}/quality-gate.sh"
+ETAG_FILE="${SCRIPT_DIR}/quality-gate.sh.etag"
+GIST_RAW_URL="https://gist.githubusercontent.com/ondrasek/f796e3c3321fe0033845994f5406eb0d/raw/quality-gate.sh"
+CHECK_INTERVAL=3600  # 60 minutes
 
 HOOK_LOG="${CLAUDE_PROJECT_DIR}/.claude/hooks/hook-debug.log"
 mkdir -p "$(dirname "$HOOK_LOG")" 2>/dev/null
@@ -16,6 +25,74 @@ debuglog() {
     echo "[quality-gate] $(date '+%Y-%m-%d %H:%M:%S') $1" >> "$HOOK_LOG"
 }
 debuglog "=== HOOK STARTED (pid=$$) ==="
+
+# ─── Self-update check ───────────────────────────────────────────────────────
+# Uses ETag-based conditional GET against a GitHub gist. The .etag file serves
+# double duty: its content is the ETag, its mtime is the last-check timestamp.
+# Rate-limited to once per CHECK_INTERVAL seconds via mtime comparison.
+
+check_for_update() {
+    # Skip if gist URL hasn't been configured yet
+    [[ "$GIST_RAW_URL" == *"GIST_ID"* ]] && return 0
+
+    # Rate limit: check mtime of .etag file
+    if [[ -f "$ETAG_FILE" ]]; then
+        local now last_modified age
+        now=$(date +%s)
+        last_modified=$(stat -f %m "$ETAG_FILE" 2>/dev/null || stat -c %Y "$ETAG_FILE" 2>/dev/null) || return 0
+        age=$(( now - last_modified ))
+        if (( age < CHECK_INTERVAL )); then
+            debuglog "Update check skipped (last check ${age}s ago)"
+            return 0
+        fi
+    fi
+
+    local etag=""
+    [[ -f "$ETAG_FILE" ]] && etag=$(cat "$ETAG_FILE")
+
+    local header_args=()
+    [[ -n "$etag" ]] && header_args=(-H "If-None-Match: $etag")
+
+    local headers_tmp="${TMPDIR:-/tmp}/qg-headers.$$"
+    local status
+    status=$(curl -sf --max-time 5 -o /dev/null -w "%{http_code}" \
+        -D "$headers_tmp" "${header_args[@]}" "$GIST_RAW_URL") || {
+        rm -f "$headers_tmp"
+        debuglog "Update check failed (network error), skipping"
+        return 0
+    }
+
+    if [[ "$status" == "200" ]]; then
+        # New version available — extract new ETag for the update message
+        local new_etag
+        new_etag=$(grep -i '^etag:' "$headers_tmp" | tr -d '\r' | awk '{print $2}')
+        rm -f "$headers_tmp"
+        debuglog "Update available (new etag: $new_etag)"
+
+        echo "" >&2
+        echo "QUALITY GATE UPDATE AVAILABLE:" >&2
+        echo "" >&2
+        echo "A newer version of quality-gate.sh is available from the canonical gist." >&2
+        echo "" >&2
+        echo "ACTION REQUIRED: Update the quality gate before proceeding." >&2
+        echo "  1. Download the new script:" >&2
+        echo "     curl -sf '$GIST_RAW_URL' > '$SCRIPT_PATH'" >&2
+        echo "  2. Make it executable:" >&2
+        echo "     chmod +x '$SCRIPT_PATH'" >&2
+        echo "  3. Save the new ETag:" >&2
+        echo "     echo '$new_etag' > '$ETAG_FILE'" >&2
+        echo "  4. Stage and commit both files." >&2
+        echo "" >&2
+        exit 2
+    fi
+
+    # 304 = current, any other status = skip silently
+    rm -f "$headers_tmp"
+    touch "$ETAG_FILE"  # Update mtime for rate limiting
+    debuglog "Update check complete (status=$status, up to date)"
+}
+
+check_for_update
 
 # Skip entirely if no Python files exist
 if ! find . -name '*.py' -not -path './.venv/*' -not -path './.git/*' -print -quit 2>/dev/null | grep -q .; then

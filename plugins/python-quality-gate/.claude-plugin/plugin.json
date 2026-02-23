@@ -1,9 +1,0 @@
-{
-  "name": "python-quality-gate",
-  "version": "0.1.0",
-  "description": "Fail-fast Python quality gate — 14 checks (tests, coverage, linting, types, security, complexity, dead code, imports, docs) via Stop hook",
-  "author": {
-    "name": "Ondrej (Ondra) Krajicek",
-    "email": "me@ondrejkrajicek.com"
-  }
-}
