@@ -4,21 +4,15 @@
 # Claude resolves the issue, next Stop re-runs and progresses to the next check.
 #
 # Cascade order:
+#   0. Already clean? → exit 0 (fast path)
 #   1. Remote changes? → "Pull/merge from remote"
-#   2. Untracked/modified files? → "Stage your files"
-#   3. Plugin version bumps? → "Bump versions"
-#   4. Staged uncommitted? → "Commit with conventional message"
-#   5. Unpushed commits? → "Push to remote"
+#   2. Untracked/modified files? → "Stage with git add -A"
+#   3. Staged uncommitted? → "Commit with conventional message"
+#   4. Unpushed commits? → "Push to remote"
 #   All clean → exit 0
 #
 # Exit 0 = clean; exit 2 = action needed (message fed back to Claude).
 # Compatible with bash 3 (macOS default).
-
-# Guard against infinite loop (e.g., if Claude restarts from hook output)
-if [ -n "$CLAUDE_HOOK_RUNNING" ]; then
-    exit 0
-fi
-export CLAUDE_HOOK_RUNNING=1
 
 cd "$CLAUDE_PROJECT_DIR" || exit 0
 
@@ -26,6 +20,40 @@ cd "$CLAUDE_PROJECT_DIR" || exit 0
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     exit 0
 fi
+
+# ─── Check 0: Fast path — nothing to do ──────────────────────────────────────
+
+check_clean() {
+    # Quick check: any dirty files at all?
+    if [ -n "$(git status --porcelain)" ]; then
+        return 1  # dirty, continue to other checks
+    fi
+
+    # Working tree is clean — but are there unpushed commits?
+    local UPSTREAM
+    UPSTREAM="$(git rev-parse --abbrev-ref '@{u}' 2>/dev/null || echo "")"
+    if [ -z "$UPSTREAM" ]; then
+        # No upstream — if there are commits, we need to push
+        local BRANCH
+        BRANCH="$(git symbolic-ref --short HEAD 2>/dev/null || echo "")"
+        if [ -n "$BRANCH" ] && [ "$(git rev-list --count HEAD 2>/dev/null || echo "0")" != "0" ]; then
+            return 1  # has commits but no upstream
+        fi
+        return 0  # nothing to do
+    fi
+
+    # Check if local matches remote (without fetching — that's Check 1's job)
+    local LOCAL REMOTE
+    LOCAL="$(git rev-parse HEAD 2>/dev/null || echo "")"
+    REMOTE="$(git rev-parse '@{u}' 2>/dev/null || echo "")"
+    if [ "$LOCAL" = "$REMOTE" ]; then
+        return 0  # clean and pushed
+    fi
+
+    return 1  # unpushed commits
+}
+
+check_clean && exit 0
 
 # ─── Check 1: Remote changes (behind or diverged) ────────────────────────────
 
@@ -130,118 +158,15 @@ What failed: There are untracked or modified files that need to be staged.
 
 Context:
 $(printf '%b' "$FILES_LIST")
-Action required: Review each file and decide whether to stage or gitignore it.
-  - Use \`git add <specific files>\` to stage files you want committed
-  - Do NOT use \`git add -A\` — be deliberate about what gets staged
-  - Add paths to .gitignore if they should not be tracked (build artifacts, secrets, etc.)
+Action required: Stage all changes. The .gitignore file handles exclusions.
+  command: git add -A
 EOF
     return 2
 }
 
 check_unstaged_changes || exit $?
 
-# ─── Check 3: Plugin version bumps ───────────────────────────────────────────
-
-check_version_bumps() {
-    # Determine current branch
-    local CURRENT_BRANCH
-    CURRENT_BRANCH="$(git symbolic-ref --short HEAD 2>/dev/null || echo "")"
-    if [ -z "$CURRENT_BRANCH" ]; then
-        return 0  # detached HEAD
-    fi
-
-    # Determine base ref for comparison
-    local BASE_REF
-    if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then
-        BASE_REF="HEAD~1"
-        if ! git rev-parse HEAD~1 >/dev/null 2>&1; then
-            return 0  # first commit in repo
-        fi
-    else
-        BASE_REF="$(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null || echo "")"
-        if [ -z "$BASE_REF" ]; then
-            return 0
-        fi
-    fi
-
-    # Get files changed: committed since base ref + currently staged
-    local COMMITTED_FILES STAGED_FILES CHANGED_FILES
-    COMMITTED_FILES="$(git diff --name-only "$BASE_REF"..HEAD 2>/dev/null || echo "")"
-    STAGED_FILES="$(git diff --cached --name-only 2>/dev/null || echo "")"
-    CHANGED_FILES="$(printf '%s\n%s' "$COMMITTED_FILES" "$STAGED_FILES" | sort -u | grep -v '^$' || echo "")"
-
-    if [ -z "$CHANGED_FILES" ]; then
-        return 0
-    fi
-
-    # Extract unique plugin directories from changed files
-    local AFFECTED_PLUGINS
-    AFFECTED_PLUGINS="$(echo "$CHANGED_FILES" | grep -oE '^plugins/[^/]+' | sort -u || echo "")"
-    if [ -z "$AFFECTED_PLUGINS" ]; then
-        return 0  # no plugin files changed
-    fi
-
-    # Temp file to collect unbumped plugin details (bash 3 compatible)
-    local DETAILS_FILE
-    DETAILS_FILE="$(mktemp "${TMPDIR:-/tmp}/version-bump-check.XXXXXX")"
-    trap 'rm -f "$DETAILS_FILE"' RETURN
-
-    # Check each affected plugin for version bump
-    local PLUGIN_PATH PLUGIN_NAME MANIFEST BASE_VERSION HEAD_VERSION PLUGIN_FILES
-    for PLUGIN_PATH in $AFFECTED_PLUGINS; do
-        PLUGIN_NAME="$(basename "$PLUGIN_PATH")"
-        MANIFEST="$PLUGIN_PATH/.claude-plugin/plugin.json"
-
-        # Get version at base ref (empty if plugin didn't exist)
-        BASE_VERSION="$(git show "$BASE_REF:$MANIFEST" 2>/dev/null | jq -r '.version // empty' 2>/dev/null || echo "")"
-        if [ -z "$BASE_VERSION" ]; then
-            continue  # new plugin, no prior version to compare
-        fi
-
-        # Get version from the staged/working tree file
-        if [ -f "$MANIFEST" ]; then
-            HEAD_VERSION="$(jq -r '.version // empty' "$MANIFEST" 2>/dev/null || echo "")"
-        else
-            continue  # plugin.json removed
-        fi
-
-        if [ -z "$HEAD_VERSION" ]; then
-            continue  # no version field
-        fi
-
-        # Compare versions
-        if [ "$BASE_VERSION" = "$HEAD_VERSION" ]; then
-            PLUGIN_FILES="$(echo "$CHANGED_FILES" | grep "^$PLUGIN_PATH/" | head -10 | sed 's/^/    - /')"
-            printf '  Plugin: %s\n  Current version: %s\n  Manifest: %s\n  Changed files:\n%s\n\n' \
-                "$PLUGIN_NAME" "$HEAD_VERSION" "$MANIFEST" "$PLUGIN_FILES" >> "$DETAILS_FILE"
-        fi
-    done
-
-    # If no unbumped plugins, pass
-    if [ ! -s "$DETAILS_FILE" ]; then
-        return 0
-    fi
-
-    # Block with structured message
-    cat >&2 <<EOF
-PLUGIN VERSION NOT BUMPED
-
-What failed: Plugin(s) have changes but their version in plugin.json was not updated.
-
-$(cat "$DETAILS_FILE")
-Action required: Determine the appropriate semver increment for each plugin listed above:
-  - PATCH (x.y.Z): bug fixes, minor tweaks, documentation changes
-  - MINOR (x.Y.0): new features, new skills, backward-compatible enhancements
-  - MAJOR (X.0.0): breaking changes to skill interfaces or hook contracts
-
-Update the "version" field in each plugin's .claude-plugin/plugin.json.
-EOF
-    return 2
-}
-
-check_version_bumps || exit $?
-
-# ─── Check 4: Staged uncommitted changes ─────────────────────────────────────
+# ─── Check 3: Staged uncommitted changes ─────────────────────────────────────
 
 check_staged_uncommitted() {
     local STAGED
@@ -293,7 +218,7 @@ EOF
 
 check_staged_uncommitted || exit $?
 
-# ─── Check 5: Unpushed commits ───────────────────────────────────────────────
+# ─── Check 4: Unpushed commits ───────────────────────────────────────────────
 
 check_unpushed() {
     local BRANCH
