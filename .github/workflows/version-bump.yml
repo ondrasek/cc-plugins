@@ -1,0 +1,127 @@
+name: Version Bump
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/**'
+      - '!plugins/**/.claude-plugin/plugin.json'
+
+permissions:
+  contents: write
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed plugins
+        id: changes
+        run: |
+          # Get files changed in this push (exclude plugin.json itself)
+          CHANGED=$(git diff --name-only HEAD~1 HEAD -- 'plugins/' | grep -v '\.claude-plugin/plugin\.json' || true)
+
+          if [ -z "$CHANGED" ]; then
+            echo "No plugin content changes detected"
+            echo "plugins=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Extract unique plugin directories
+          PLUGINS=$(echo "$CHANGED" | grep -oE '^plugins/[^/]+' | sort -u | tr '\n' ' ')
+          echo "Changed plugins: $PLUGINS"
+          echo "plugins=$PLUGINS" >> "$GITHUB_OUTPUT"
+
+          # Save changed files for Claude's analysis
+          echo "$CHANGED" > /tmp/changed-files.txt
+          git diff HEAD~1 HEAD -- $PLUGINS > /tmp/full-diff.patch
+          git log HEAD~1..HEAD --format="%s%n%b" > /tmp/commit-messages.txt
+
+      - name: Setup Node.js
+        if: steps.changes.outputs.plugins != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Bump versions with Claude
+        if: steps.changes.outputs.plugins != ''
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          npm install -g @anthropic-ai/claude-code
+
+          PLUGINS="${{ steps.changes.outputs.plugins }}"
+          COMMIT_MESSAGES=$(cat /tmp/commit-messages.txt)
+          CHANGED_FILES=$(cat /tmp/changed-files.txt)
+          DIFF=$(head -c 50000 /tmp/full-diff.patch)
+
+          for PLUGIN_DIR in $PLUGINS; do
+            PLUGIN_NAME=$(basename "$PLUGIN_DIR")
+            MANIFEST="$PLUGIN_DIR/.claude-plugin/plugin.json"
+
+            if [ ! -f "$MANIFEST" ]; then
+              echo "No manifest for $PLUGIN_NAME, skipping"
+              continue
+            fi
+
+            CURRENT_VERSION=$(jq -r '.version' "$MANIFEST")
+            PLUGIN_FILES=$(echo "$CHANGED_FILES" | grep "^$PLUGIN_DIR/" || true)
+            PLUGIN_DIFF=$(git diff HEAD~1 HEAD -- "$PLUGIN_DIR" | head -c 20000)
+
+            echo "Analyzing $PLUGIN_NAME (current: $CURRENT_VERSION)..."
+
+            NEW_VERSION=$(claude -p --model haiku --output-format text "You are a version bump analyzer. Given the diff and commit messages below, determine the correct semver bump for this plugin and output ONLY the new version number (e.g. 0.3.1). Nothing else.
+
+Current version: $CURRENT_VERSION
+
+Rules:
+- PATCH (x.y.Z): bug fixes, documentation changes, minor tweaks, refactoring
+- MINOR (x.Y.0): new features, new skills, new capabilities, backward-compatible enhancements
+- MAJOR (X.0.0): breaking changes to skill interfaces, hook contracts, or behavior
+
+Commit messages:
+$COMMIT_MESSAGES
+
+Changed files in $PLUGIN_NAME:
+$PLUGIN_FILES
+
+Diff:
+$PLUGIN_DIFF
+
+Output ONLY the new version number:")
+
+            # Validate the version looks like semver
+            if echo "$NEW_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              if [ "$NEW_VERSION" != "$CURRENT_VERSION" ]; then
+                echo "Bumping $PLUGIN_NAME: $CURRENT_VERSION → $NEW_VERSION"
+                jq --arg v "$NEW_VERSION" '.version = $v' "$MANIFEST" > "$MANIFEST.tmp"
+                mv "$MANIFEST.tmp" "$MANIFEST"
+              else
+                echo "$PLUGIN_NAME: Claude determined no bump needed"
+              fi
+            else
+              echo "Warning: Claude returned invalid version '$NEW_VERSION' for $PLUGIN_NAME, skipping"
+            fi
+          done
+
+      - name: Commit and push
+        if: steps.changes.outputs.plugins != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet; then
+            echo "No version changes to commit"
+            exit 0
+          fi
+
+          git add 'plugins/*/.claude-plugin/plugin.json'
+          git commit -m "chore: bump plugin versions
+
+          Auto-detected version bumps based on commit analysis.
+
+          Co-Authored-By: Claude <noreply@anthropic.com>"
+          git push
