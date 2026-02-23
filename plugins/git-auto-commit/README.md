@@ -29,7 +29,7 @@ Stop → All clean                       → exit 0
 
 - **Claude commits early and often** — the hook enforces it, Claude does the git operations
 - **`.gitignore` handles exclusions** — staging uses `git add -A`, no file-by-file review
-- **Conventional Commits** — the hook provides the format spec inline so Claude generates the right message
+- **Conventional Commits** — the hook provides the format spec inline so Claude writes the right message
 - **Fail-fast** — one issue at a time, resolved before progressing
 
 ## Prerequisites
