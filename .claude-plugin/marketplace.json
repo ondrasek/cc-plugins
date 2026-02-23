@@ -32,7 +32,7 @@
     {
       "name": "git-auto-commit",
       "source": "./plugins/git-auto-commit",
-      "description": "Fail-fast cascade checker — enforces staging, version bumps, conventional commits, and push via Stop hook"
+      "description": "Fail-fast cascade checker — enforces staging, conventional commits, and push via Stop hook"
     },
     {
       "name": "auto-release",

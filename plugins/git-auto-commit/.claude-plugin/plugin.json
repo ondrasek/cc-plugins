@@ -1,7 +1,7 @@
 {
   "name": "git-auto-commit",
   "version": "0.3.0",
-  "description": "Fail-fast cascade checker — enforces staging, version bumps, conventional commits, and push via Stop hook",
+  "description": "Fail-fast cascade checker — enforces staging, conventional commits, and push via Stop hook",
   "author": {
     "name": "Ondrej (Ondra) Krajicek",
     "email": "me@ondrejkrajicek.com"
