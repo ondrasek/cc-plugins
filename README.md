@@ -27,6 +27,7 @@ Then install individual plugins:
 | [github-releases](plugins/github-releases/) | Intelligent GitHub release management — version detection, conventional commit analysis, release notes generation |
 | [git-auto-commit](plugins/git-auto-commit/) | Fail-fast cascade checker — enforces staging, version bumps, conventional commits, and push via Stop hook |
 | [auto-release](plugins/auto-release/) | Automated semantic versioning and GitHub releases from conventional commits |
+| [python-quality-gate](plugins/python-quality-gate/) | Fail-fast Python quality gate — 14 checks (tests, coverage, linting, types, security, complexity, dead code, imports, docs) via Stop hook |
 
 ## Local Development
 
