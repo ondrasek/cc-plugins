@@ -56,7 +56,6 @@ jobs:
           PLUGINS="${{ steps.changes.outputs.plugins }}"
           COMMIT_MESSAGES=$(cat /tmp/commit-messages.txt)
           CHANGED_FILES=$(cat /tmp/changed-files.txt)
-          DIFF=$(head -c 50000 /tmp/full-diff.patch)
 
           for PLUGIN_DIR in $PLUGINS; do
             PLUGIN_NAME=$(basename "$PLUGIN_DIR")
@@ -73,30 +72,35 @@ jobs:
 
             echo "Analyzing $PLUGIN_NAME (current: $CURRENT_VERSION)..."
 
-            NEW_VERSION=$(claude -p --model haiku --output-format text "You are a version bump analyzer. Given the diff and commit messages below, determine the correct semver bump for this plugin and output ONLY the new version number (e.g. 0.3.1). Nothing else.
+            # Build prompt in a temp file to avoid YAML parsing issues
+            cat > /tmp/bump-prompt.txt <<PROMPT_EOF
+          You are a version bump analyzer. Given the diff and commit messages below, determine the correct semver bump for this plugin and output ONLY the new version number (e.g. 0.3.1). Nothing else.
 
-Current version: $CURRENT_VERSION
+          Current version: $CURRENT_VERSION
 
-Rules:
-- PATCH (x.y.Z): bug fixes, documentation changes, minor tweaks, refactoring
-- MINOR (x.Y.0): new features, new skills, new capabilities, backward-compatible enhancements
-- MAJOR (X.0.0): breaking changes to skill interfaces, hook contracts, or behavior
+          Rules:
+          - PATCH (x.y.Z): bug fixes, documentation changes, minor tweaks, refactoring
+          - MINOR (x.Y.0): new features, new skills, new capabilities, backward-compatible enhancements
+          - MAJOR (X.0.0): breaking changes to skill interfaces, hook contracts, or behavior
 
-Commit messages:
-$COMMIT_MESSAGES
+          Commit messages:
+          $COMMIT_MESSAGES
 
-Changed files in $PLUGIN_NAME:
-$PLUGIN_FILES
+          Changed files in $PLUGIN_NAME:
+          $PLUGIN_FILES
 
-Diff:
-$PLUGIN_DIFF
+          Diff:
+          $PLUGIN_DIFF
 
-Output ONLY the new version number:")
+          Output ONLY the new version number:
+          PROMPT_EOF
+
+            NEW_VERSION=$(claude -p --model haiku --output-format text < /tmp/bump-prompt.txt)
 
             # Validate the version looks like semver
             if echo "$NEW_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
               if [ "$NEW_VERSION" != "$CURRENT_VERSION" ]; then
-                echo "Bumping $PLUGIN_NAME: $CURRENT_VERSION → $NEW_VERSION"
+                echo "Bumping $PLUGIN_NAME: $CURRENT_VERSION -> $NEW_VERSION"
                 jq --arg v "$NEW_VERSION" '.version = $v' "$MANIFEST" > "$MANIFEST.tmp"
                 mv "$MANIFEST.tmp" "$MANIFEST"
               else
