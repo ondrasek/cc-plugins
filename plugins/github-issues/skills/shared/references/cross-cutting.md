@@ -1,6 +1,6 @@
 ---
 type: reference
-used_by: triage, manage, refine, develop, organize
+used_by: triage, manage, refine, develop, organize, create
 description: Cross-cutting behaviors that apply to ALL github-issues skills. Read this before executing any skill.
 ---
 

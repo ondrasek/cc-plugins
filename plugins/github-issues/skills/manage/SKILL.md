@@ -1,18 +1,19 @@
 ---
 name: manage
-description: Create, edit, close, and manage GitHub issues with codebase awareness. Use when user says "create an issue", "file a bug", "close issue #42", "update the title", "add labels", "assign to", "reopen", "delete issue", "manage labels", or wants to perform CRUD operations on GitHub issues.
+description: Edit, close, reopen, delete, and manage GitHub issues and labels. Use when user says "close issue #42", "update the title", "add labels", "assign to", "reopen", "delete issue", "manage labels", or wants to modify existing GitHub issues. For creating new issues, use the create skill instead.
 ---
 
 # Manage
 
-Creates and modifies issues. Codebase-aware — scans for context when creating.
+Modifies existing issues — edit, close, reopen, delete, batch operations, and label management.
+
+For creating new issues, use `/github-issues:create`.
 
 ## Critical Rules
 
 - **Read cross-cutting behaviors first**: `skills/shared/references/cross-cutting.md`
-- **Always search for related issues** before creating a new one
 - **Always add a comment** when making significant changes (labels, milestone, assignee)
-- **Always preview** issue content with the user before creating or making major edits
+- **Always preview** before making major edits
 - **NEVER create priority labels** — see `skills/shared/references/label-taxonomy.md`
 - **Use `--json` flags** for structured output
 
@@ -24,38 +25,7 @@ gh auth status
 
 ## Capabilities
 
-### 1. Create Issue
-
-**Workflow**:
-
-1. **Gather context** — understand what the user wants to report/request
-2. **Scan codebase** — if the issue relates to code, look at relevant files to add context (file paths, function names, error messages)
-3. **Search for related issues** — find duplicates or related work:
-   ```bash
-   gh issue list --search "keyword" --state all --json number,title,state --limit 10
-   ```
-4. **Check existing labels** — suggest appropriate labels:
-   ```bash
-   gh label list --json name,color,description --limit 100
-   ```
-5. **Draft the issue** — compose title and body with:
-   - Clear problem statement or feature request
-   - Steps to reproduce (for bugs)
-   - References to related issues (`Related to #N`, `See also #N`)
-   - Relevant code snippets or file paths
-6. **Preview with user** — show the draft and wait for approval
-7. **Create**:
-   ```bash
-   gh issue create \
-     --title "Title" \
-     --body "Body with markdown" \
-     --label "type: bug" \
-     --assignee @me
-   ```
-
-**After creation**: Report the issue number and URL.
-
-### 2. Edit Issue
+### 1. Edit Issue
 
 Modify issue properties with context.
 
