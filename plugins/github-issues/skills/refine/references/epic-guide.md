@@ -1,6 +1,6 @@
 ---
 type: reference
-used_by: refine
+used_by: refine, issue-reviewer
 description: How to structure an epic — scope definition, acceptance criteria patterns, and decomposition heuristics.
 ---
 

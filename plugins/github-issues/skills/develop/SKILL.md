@@ -36,6 +36,8 @@ Begin work on an issue: view it, create a branch, assign, and comment.
    ```
    Verify the issue is open. If closed, ask the user if they want to reopen it.
 
+1b. **Readiness review** — delegate to the `issue-reviewer` agent to verify the issue has acceptance criteria and proper labels before starting development. Present the review results to the user. If the review fails, suggest refining the issue first using the refine skill.
+
 2. **Check working tree**:
    ```bash
    git status --porcelain

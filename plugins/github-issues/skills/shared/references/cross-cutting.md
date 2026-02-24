@@ -1,6 +1,6 @@
 ---
 type: reference
-used_by: triage, manage, refine, develop, organize, create
+used_by: triage, manage, refine, develop, organize, create, issue-reviewer
 description: Cross-cutting behaviors that apply to ALL github-issues skills. Read this before executing any skill.
 ---
 
@@ -45,7 +45,7 @@ Add comments to provide context for changes. Comments explain **why**, not just 
 
 | Action | Comment template |
 |--------|-----------------|
-| Adding/removing labels | "Added `type: bug` — this is a defect in existing behavior, not a missing feature." |
+| Adding/removing labels | "Added `bug` — this is a defect in existing behavior, not a missing feature." |
 | Changing milestone | "Moved to v2.1 milestone — depends on #45 which won't land in v2.0." |
 | Closing an issue | "Closing — resolved by #78. The fix covers both the original report and the edge case in #23." |
 | Refining an issue | "Refined: added acceptance criteria and user story format. Scope narrowed to X, split Y into #89." |
@@ -71,21 +71,25 @@ gh label list --json name,color,description --limit 100
 
 ### Label naming convention
 
-- Lowercase
-- Prefix with category and colon: `type: bug`, `status: ready`, `area: auth`
-- Kebab-case for multi-word values: `type: breaking-change`
+- Lowercase, kebab-case
+- **No prefixes** — use plain names like `bug`, `feature`, `api`
+- NEVER use `type:`, `status:`, `area:`, or any other `category: value` pattern
 
 ### Creating labels
 
 Only create labels when no existing label fits. Follow the taxonomy in `label-taxonomy.md`.
 
 ```bash
-gh label create "type: bug" --color "d73a4a" --description "Something isn't working"
+gh label create "bug" --color "d73a4a" --description "Something isn't working"
 ```
 
-### The absolute rule
+### The absolute rules
 
-**NEVER create labels that reflect priority.** No `priority: high`, `priority: low`, `priority: critical`, `P0`, `P1`, etc. This is a firm user requirement with no exceptions.
+**NEVER create labels that reflect status.** No `triage`, `ready`, `blocked`, `in-progress`, `needs-info`, `review`, or any workflow-state label.
+
+**NEVER create labels that reflect priority.** No `high`, `low`, `critical`, `P0`, `P1`, etc. This is a firm user requirement with no exceptions.
+
+**NEVER use prefixes in label names.** No `type: bug`, `status: ready`, `area: api`. Use plain names only.
 
 ### Suggesting labels
 

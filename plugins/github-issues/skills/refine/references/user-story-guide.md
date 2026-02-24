@@ -1,6 +1,6 @@
 ---
 type: reference
-used_by: refine, create
+used_by: refine, create, issue-reviewer
 description: User story format, INVEST criteria with practical tests, acceptance criteria patterns, and common anti-patterns.
 ---
 

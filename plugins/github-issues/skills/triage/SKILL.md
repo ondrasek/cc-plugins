@@ -33,8 +33,8 @@ Translate natural language queries into `gh issue list` flags.
 | User says | Command |
 |-----------|---------|
 | "show my issues" | `gh issue list --assignee @me --json number,title,state,labels,updatedAt` |
-| "list open bugs" | `gh issue list --label "type: bug" --state open --json number,title,assignees,updatedAt` |
-| "what needs triage" | `gh issue list --label "status: triage" --json number,title,createdAt,author` |
+| "list open bugs" | `gh issue list --label "bug" --state open --json number,title,assignees,updatedAt` |
+| "what needs triage" | `gh issue list --search "no:label" --state open --json number,title,createdAt,author` |
 | "issues updated this week" | `gh issue list --search "updated:>YYYY-MM-DD" --json number,title,state,updatedAt` |
 | "unassigned issues" | `gh issue list --search "no:assignee" --state open --json number,title,labels,createdAt` |
 | "issues mentioning auth" | `gh issue list --search "auth" --json number,title,state,labels` |

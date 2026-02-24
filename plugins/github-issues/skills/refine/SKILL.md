@@ -80,9 +80,11 @@ Take a rough or empty issue and refine it into a well-structured user story.
    gh label list --json name,description --limit 100
    ```
 
-8. **Preview with user** — show the refined body and wait for approval
+8. **Review** — delegate to the `issue-reviewer` agent to validate the refined issue. Present the review results to the user. If the review fails, fix the issues before proceeding.
 
-9. **Update the issue**:
+9. **Preview with user** — show the refined body and wait for approval
+
+10. **Update the issue**:
    ```bash
    gh issue edit NUMBER --body "refined body"
    gh issue comment NUMBER --body "Refined: added user story format and acceptance criteria. Changes: [summary of what was added/changed]."
@@ -115,7 +117,7 @@ Take a rough or empty issue and structure it as an epic with sub-issues.
 5. **Update the epic issue**:
    ```bash
    gh issue edit NUMBER --body "epic body"
-   gh issue edit NUMBER --add-label "type: epic"
+   gh issue edit NUMBER --add-label "epic"
    ```
 
 6. **Create sub-issues** — for each approved child story:
@@ -194,7 +196,7 @@ Take an oversized user story and split it into smaller stories.
 6. **Update original issue** — add a comment and optionally convert it to an epic:
    ```bash
    gh issue comment NUMBER --body "Split into smaller stories: #A, #B, #C. This issue now serves as the parent epic."
-   gh issue edit NUMBER --add-label "type: epic"
+   gh issue edit NUMBER --add-label "epic"
    ```
 
 ## Troubleshooting

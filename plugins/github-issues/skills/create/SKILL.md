@@ -180,6 +180,10 @@ Before presenting to the user, check the draft against:
 
 3. **Labels** — suggest appropriate labels from the existing set
 
+### Phase 4b: Review
+
+Before finalizing any issue creation, delegate to the `issue-reviewer` agent to validate the proposed changes. Present the review results to the user. If the review fails, fix the issues before proceeding.
+
 ### Phase 5: Preview and Create
 
 Present the complete draft to the user:
@@ -195,7 +199,7 @@ Wait for user approval or feedback. Iterate if needed.
 gh issue create \
   --title "Title" \
   --body "Body with markdown" \
-  --label "type: feature,status: ready" \
+  --label "feature" \
   --assignee @me
 ```
 

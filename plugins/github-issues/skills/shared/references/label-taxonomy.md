@@ -1,6 +1,6 @@
 ---
 type: reference
-used_by: triage, manage, refine, develop, organize, create
+used_by: triage, manage, refine, develop, organize, create, issue-reviewer
 description: Recommended label categories, naming conventions, and color coding for GitHub issue labels.
 ---
 
@@ -15,32 +15,27 @@ gh label list --json name,color,description --limit 100
 
 Only create labels when no existing label fits the need. Many repos already have labels that cover common categories.
 
-## Recommended Categories
+## Naming Convention
 
-### `type:` — What kind of work
+- Lowercase, kebab-case
+- **No prefixes** — use plain names like `bug`, not `type: bug`
+- NEVER use `type:`, `status:`, `area:`, or any other prefix
 
-| Label | Color | Description |
-|-------|-------|-------------|
-| `type: bug` | `#d73a4a` | Something isn't working |
-| `type: feature` | `#a2eeef` | New functionality |
-| `type: chore` | `#d4c5f9` | Maintenance, refactoring, dependencies |
-| `type: docs` | `#0075ca` | Documentation only changes |
-| `type: epic` | `#7057ff` | Parent issue tracking a body of work |
-| `type: spike` | `#fbca04` | Research or investigation task |
-| `type: breaking-change` | `#b60205` | Requires migration or changes consumer behavior |
+## Recommended Labels
 
-### `status:` — Current state
+### Work type
 
 | Label | Color | Description |
 |-------|-------|-------------|
-| `status: triage` | `#e4e669` | Needs initial assessment |
-| `status: ready` | `#0e8a16` | Ready for development |
-| `status: blocked` | `#b60205` | Cannot proceed, dependency or decision needed |
-| `status: needs-info` | `#fbca04` | Waiting for more information from reporter |
-| `status: in-progress` | `#1d76db` | Actively being worked on |
-| `status: review` | `#5319e7` | Implementation complete, needs review |
+| `bug` | `#d73a4a` | Something isn't working |
+| `feature` | `#a2eeef` | New functionality |
+| `chore` | `#d4c5f9` | Maintenance, refactoring, dependencies |
+| `docs` | `#0075ca` | Documentation only changes |
+| `epic` | `#7057ff` | Parent issue tracking a body of work |
+| `spike` | `#fbca04` | Research or investigation task |
+| `breaking-change` | `#b60205` | Requires migration or changes consumer behavior |
 
-### `area:` — Component or domain
+### Area (project-specific)
 
 Area labels are project-specific. Discover them from the codebase:
 
@@ -49,15 +44,15 @@ Area labels are project-specific. Discover them from the codebase:
 ls -d */
 
 # Check existing area labels
-gh label list --json name | jq '.[] | select(.name | startswith("area:"))'
+gh label list --json name | jq '.[] | select(.name | test("api|auth|ui|db|infra"))'
 ```
 
 Common patterns:
-- `area: api` — API layer
-- `area: auth` — Authentication/authorization
-- `area: ui` — User interface
-- `area: db` — Database layer
-- `area: infra` — Infrastructure/deployment
+- `api` — API layer
+- `auth` — Authentication/authorization
+- `ui` — User interface
+- `db` — Database layer
+- `infra` — Infrastructure/deployment
 
 ### Standard GitHub labels
 
@@ -72,9 +67,8 @@ These are often pre-created by GitHub. Check before creating:
 ## Color Coding Convention
 
 Keep the same hue within a category for visual grouping:
-- **type:** — varies by severity/nature (red for bugs, blue for features, purple for chores)
-- **status:** — traffic-light metaphor (green for ready, yellow for waiting, red for blocked)
-- **area:** — pick a consistent neutral hue (e.g., all grays or all teals)
+- **Work type** — varies by severity/nature (red for bugs, blue for features, purple for chores)
+- **Area** — pick a consistent neutral hue (e.g., all grays or all teals)
 
 ## Creating a label
 
@@ -82,15 +76,23 @@ Keep the same hue within a category for visual grouping:
 gh label create "LABEL_NAME" --color "HEX_WITHOUT_HASH" --description "Description"
 
 # Examples:
-gh label create "type: bug" --color "d73a4a" --description "Something isn't working"
-gh label create "status: ready" --color "0e8a16" --description "Ready for development"
-gh label create "area: api" --color "c5def5" --description "API layer"
+gh label create "bug" --color "d73a4a" --description "Something isn't working"
+gh label create "feature" --color "a2eeef" --description "New functionality"
+gh label create "api" --color "c5def5" --description "API layer"
 ```
 
 ## What NEVER to create
 
+**Status labels are forbidden.** Do not create any of:
+- `triage`, `ready`, `blocked`, `needs-info`, `in-progress`, `review`
+- Any label whose purpose is to track workflow state
+
 **Priority labels are forbidden.** Do not create any of:
-- `priority: high`, `priority: low`, `priority: medium`, `priority: critical`
+- `high`, `low`, `medium`, `critical`
 - `P0`, `P1`, `P2`, `P3`, `P4`
 - `urgent`, `important`
 - Any label whose purpose is to rank issue importance
+
+**Prefixed labels are forbidden.** Do not create any of:
+- `type: bug`, `status: ready`, `area: api`
+- Any label using a `category: value` pattern

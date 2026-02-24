@@ -23,6 +23,10 @@ For creating new issues, use `/github-issues:create`.
 gh auth status
 ```
 
+## Review Before Modifying
+
+Before executing any issue edit (title, body, labels, assignee, milestone), delegate to the `issue-reviewer` agent to validate the proposed changes. Present the review results to the user. If the review fails, fix the issues before proceeding.
+
 ## Capabilities
 
 ### 1. Edit Issue
@@ -37,10 +41,10 @@ gh issue edit NUMBER --title "New title"
 gh issue edit NUMBER --body "New body"
 
 # Add labels
-gh issue edit NUMBER --add-label "type: bug,status: ready"
+gh issue edit NUMBER --add-label "bug"
 
 # Remove labels
-gh issue edit NUMBER --remove-label "status: triage"
+gh issue edit NUMBER --remove-label "chore"
 
 # Set assignee
 gh issue edit NUMBER --add-assignee USERNAME
@@ -54,7 +58,7 @@ gh issue edit NUMBER --milestone "v2.0"
 
 **Always add a comment explaining the change**:
 ```bash
-gh issue comment NUMBER --body "Updated labels: added \`status: ready\`, removed \`status: triage\` — initial assessment complete, requirements are clear."
+gh issue comment NUMBER --body "Updated labels: added \`bug\` — this is a defect in existing behavior, not a missing feature."
 ```
 
 ### 3. Close Issue
@@ -129,8 +133,10 @@ gh label delete "LABEL_NAME" --yes
 
 **Rules**:
 - Always check existing labels before creating
-- Follow the naming convention: lowercase, `category: value`, kebab-case
+- Follow the naming convention: lowercase, kebab-case, no prefixes
 - **NEVER create priority labels** — this is an absolute rule
+- **NEVER create status labels** — no workflow-state labels
+- **NEVER use prefixes** — no `type:`, `status:`, `area:` patterns
 
 ## Troubleshooting
 
