@@ -26,7 +26,7 @@ plugins/
     scripts/per-edit-fix.sh      — Plugin-level per-edit auto-fix
   github-issues/                 — GitHub issue management utility plugin
     .claude-plugin/plugin.json   — Plugin manifest
-    skills/                      — triage, manage, refine, develop, organize
+    skills/                      — triage, manage, refine, create, develop, recommend, organize
     hooks/hooks.json             — Plugin-level hook registrations
     scripts/                     — session-start, commit-reference-check, stop-reminder
 plans/                           — Development phase documentation
@@ -167,10 +167,12 @@ Each dimension defines a role. The setup skill researches and selects the best c
 
 Branch convention: `<issue-number>-<description>` (e.g., `42-fix-bug` → issue #42). Non-matching branches are silently ignored.
 
-### Skills (5)
+### Skills (7)
 
 1. **triage** — read-only querying, viewing, and status dashboard
 2. **manage** — CRUD lifecycle, batch operations, label management
 3. **refine** — progressive refinement: rough ideas → epics → user stories (INVEST, SPIDR)
-4. **develop** — issue → branch → PR workflow bridge
-5. **organize** — lock, unlock, pin, unpin, transfer
+4. **create** — research-driven issue creation with immediate refinement
+5. **develop** — issue → branch → PR workflow bridge
+6. **recommend** — analyze open issues against codebase activity, severity, and trends to suggest what to work on next
+7. **organize** — lock, unlock, pin, unpin, transfer
