@@ -22,7 +22,8 @@ Then install individual plugins:
 |--------|-------------|
 | [python-blueprint](plugins/python-blueprint/) | Intelligent Python quality methodology — analyzes your project and configures 8 dimensions of quality tooling |
 | [dotnet-blueprint](plugins/dotnet-blueprint/) | Intelligent .NET quality methodology — analyzes your project and configures 8 dimensions of quality tooling |
-| [rust-blueprint](plugins/rust-blueprint/) | Intelligent Rust quality methodology — analyzes your project and configures 8 dimensions of quality tooling (with WASM support) |
+| [rust-blueprint](plugins/rust-blueprint/) | Intelligent Rust quality methodology — analyzes your project and configures 9 dimensions of quality tooling (with WASM support) |
+| [nvim-lua-blueprint](plugins/nvim-lua-blueprint/) | Intelligent Neovim Lua plugin quality methodology — analyzes your plugin and configures 9 dimensions of quality tooling |
 | [github-issues](plugins/github-issues/) | Intelligent GitHub issue management — natural language queries, codebase-aware creation, progressive refinement (epics → user stories) |
 | [github-releases](plugins/github-releases/) | Intelligent GitHub release management — version detection, conventional commit analysis, release notes generation |
 | [git-auto-commit](plugins/git-auto-commit/) | Fail-fast cascade checker — enforces staging, version bumps, conventional commits, and push via Stop hook |

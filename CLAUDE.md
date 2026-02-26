@@ -24,6 +24,11 @@ plugins/
     skills/                      — setup, audit, update, explain
     hooks/hooks.json             — Plugin-level hook registrations
     scripts/per-edit-fix.sh      — Plugin-level per-edit auto-fix
+  nvim-lua-blueprint/            — Neovim Lua plugin quality methodology plugin
+    .claude-plugin/plugin.json   — Plugin manifest
+    skills/                      — setup, audit, update, explain
+    hooks/hooks.json             — Plugin-level hook registrations
+    scripts/per-edit-fix.sh      — Plugin-level per-edit auto-fix
   github-issues/                 — GitHub issue management utility plugin
     .claude-plugin/plugin.json   — Plugin manifest
     skills/                      — triage, manage, refine, create, develop, recommend, organize
@@ -141,6 +146,26 @@ Each dimension defines a role. The setup skill researches and selects the best c
 - Config via `Cargo.toml` `[lints]` section, `clippy.toml`, `rustfmt.toml`, `deny.toml`
 - clippy preferred as the single linter (covers style, correctness, performance, complexity)
 - WASM target detection and adaptation (wasm-pack, wasm-bindgen, wasm32-* targets)
+- Same hook architecture: fail-fast quality gate, per-edit auto-fix, session-start hygiene
+
+## nvim-lua-blueprint Plugin
+
+### Key files to understand
+
+- `plugins/nvim-lua-blueprint/skills/setup/methodology.md` — the intellectual core: 9 quality dimensions defined as roles, hook output format, fail-fast design (adapted for Neovim Lua)
+- `plugins/nvim-lua-blueprint/skills/setup/SKILL.md` — the setup workflow including reviewer subagent
+- `plugins/nvim-lua-blueprint/skills/setup/templates/` — structural references for generated configs
+
+### Neovim Lua-Specific Conventions
+
+- Same role-based methodology as python-blueprint, adapted for Neovim Lua plugin ecosystem
+- Templates use shell variables (`${SOURCE_DIR}`, `${TEST_COMMAND}`, `${PLUGIN_NAME}`, etc.) for customization
+- Config via separate files: `selene.toml` + `vim.toml`, `.stylua.toml`, `.luacov`, `.luarc.json`
+- Always LuaJIT/Lua 5.1 (Neovim's embedded Lua)
+- Selene with `std = "vim"` for Neovim global awareness
+- Test framework detection: plenary.nvim, mini.test, busted
+- Per-edit hook runs StyLua only (selene has no `--fix` flag)
+- Security dimension is limited (no Lua equivalent of bandit/cargo-audit)
 - Same hook architecture: fail-fast quality gate, per-edit auto-fix, session-start hygiene
 
 ## github-issues Plugin

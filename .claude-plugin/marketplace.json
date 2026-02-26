@@ -20,6 +20,11 @@
       "description": "Intelligent Rust quality methodology plugin for Claude Code"
     },
     {
+      "name": "nvim-lua-blueprint",
+      "source": "./plugins/nvim-lua-blueprint",
+      "description": "Intelligent Neovim Lua plugin quality methodology for Claude Code"
+    },
+    {
       "name": "github-issues",
       "source": "./plugins/github-issues",
       "description": "Intelligent GitHub issue management for Claude Code via gh CLI"
