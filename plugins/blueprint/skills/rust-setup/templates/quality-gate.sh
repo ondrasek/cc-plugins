@@ -26,8 +26,9 @@
 set -o pipefail
 
 HOOK_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/hook-debug.log"
+WORKTREE_ID="$(basename "${CLAUDE_PROJECT_DIR:-.}")"
 debuglog() {
-    echo "[quality-gate] $(date '+%Y-%m-%d %H:%M:%S') $1" >> "$HOOK_LOG"
+    echo "[quality-gate@${WORKTREE_ID}] $(date '+%Y-%m-%d %H:%M:%S') $1" >> "$HOOK_LOG"
 }
 debuglog "=== HOOK STARTED (pid=$$) ==="
 

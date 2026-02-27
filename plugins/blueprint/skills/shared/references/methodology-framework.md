@@ -109,6 +109,34 @@ run_check_nonempty() { local name="$1"; shift; OUTPUT=$("$@" 2>&1); [ -n "$OUTPU
 
 ---
 
+## Worktree Compatibility
+
+Claude Code's `EnterWorktree` creates isolated worktrees at `.claude/worktrees/<name>/`, each with its own `$CLAUDE_PROJECT_DIR`. Blueprint hooks are designed to work correctly in both the main repository and linked worktrees.
+
+### Isolation Guarantees
+
+- **`$CLAUDE_PROJECT_DIR`** is set by Claude Code to the worktree root (not the main repo root). All hook templates use `${CLAUDE_PROJECT_DIR:-.}` for path resolution, ensuring they operate within the correct worktree.
+- **Debug logs** are written to `${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/hook-debug.log`, so each worktree gets its own log file.
+- **Git operations** (`git status`, `git add`, `git commit`, `git push`) are inherently worktree-aware — they operate on the worktree's working tree and index automatically.
+
+### Template Conventions
+
+- **Path resolution**: Always use `${CLAUDE_PROJECT_DIR:-.}` — never `git rev-parse --show-toplevel` (which may resolve to the main worktree in edge cases).
+- **Worktree identity**: Debug logs include `WORKTREE_ID="$(basename "${CLAUDE_PROJECT_DIR:-.}")"` in the log tag (e.g., `[quality-gate@fox]`). For the main repo this is the repo directory name; for a linked worktree it's the worktree name.
+- **Worktree detection**: `auto-commit.sh` compares `git rev-parse --git-dir` vs `--git-common-dir` to detect linked worktrees and appends a `(worktree: <name>)` label to stderr messages so Claude and users can see which worktree triggered the hook.
+
+### Hook Behavior in Worktrees
+
+| Hook | Worktree Behavior |
+|------|-------------------|
+| `session-start.sh` | Runs in worktree via `cd "${CLAUDE_PROJECT_DIR:-.}"` |
+| `per-edit-fix.sh` | Operates on absolute file paths from tool input — worktree-safe by design |
+| `quality-gate.sh` | All checks run against worktree files; debug log tagged with worktree ID |
+| `auto-commit.sh` | Commits and pushes from the worktree; stderr labeled when in a linked worktree |
+| `semver-check.sh` | Git commands are worktree-safe; no path resolution needed |
+
+---
+
 ## settings.json Format
 
 The correct format for `.claude/settings.json` hook registrations:
@@ -205,6 +233,7 @@ These checks target the Claude Code development environment itself — project i
 - Scripts use `${CLAUDE_PROJECT_DIR}` or `${CLAUDE_PLUGIN_ROOT}` for paths, not hardcoded absolute paths
 - Timeouts are appropriate: quality gate ≥ 120s for large projects, per-edit ≤ 30s
 - No hooks sourced from untrusted origins
+- Never use `git rev-parse --show-toplevel` for path resolution — use `${CLAUDE_PROJECT_DIR:-.}` instead (see [Worktree Compatibility](#worktree-compatibility))
 
 ### CC3: Context Efficiency
 

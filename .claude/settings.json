@@ -1,2 +1,6 @@
 {
+  "enabledPlugins": {
+    "github-issues@cc-plugins": true,
+    "blueprint@cc-plugins": true
+  }
 }

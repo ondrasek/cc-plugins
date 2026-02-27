@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-SRC_DIR="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel)}/${SOURCE_DIR}"
+SRC_DIR="${CLAUDE_PROJECT_DIR:-.}/${SOURCE_DIR}"
 
 # Find all Python files that use click
 CLI_FILES=()
