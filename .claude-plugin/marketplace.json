@@ -5,24 +5,9 @@
   },
   "plugins": [
     {
-      "name": "python-blueprint",
-      "source": "./plugins/python-blueprint",
-      "description": "Intelligent Python quality methodology plugin for Claude Code"
-    },
-    {
-      "name": "dotnet-blueprint",
-      "source": "./plugins/dotnet-blueprint",
-      "description": "Intelligent .NET quality methodology plugin for Claude Code"
-    },
-    {
-      "name": "rust-blueprint",
-      "source": "./plugins/rust-blueprint",
-      "description": "Intelligent Rust quality methodology plugin for Claude Code"
-    },
-    {
-      "name": "nvim-lua-blueprint",
-      "source": "./plugins/nvim-lua-blueprint",
-      "description": "Intelligent Neovim Lua plugin quality methodology for Claude Code"
+      "name": "blueprint",
+      "source": "./plugins/blueprint",
+      "description": "Quality methodology for Python, .NET, Rust, and Neovim Lua projects"
     },
     {
       "name": "github-issues",

@@ -13,17 +13,14 @@ Add this marketplace to Claude Code:
 Then install individual plugins:
 
 ```
-/plugin install python-blueprint@cc-plugins
+/plugin install blueprint@cc-plugins
 ```
 
 ## Available Plugins
 
 | Plugin | Description |
 |--------|-------------|
-| [python-blueprint](plugins/python-blueprint/) | Intelligent Python quality methodology — analyzes your project and configures 8 dimensions of quality tooling |
-| [dotnet-blueprint](plugins/dotnet-blueprint/) | Intelligent .NET quality methodology — analyzes your project and configures 8 dimensions of quality tooling |
-| [rust-blueprint](plugins/rust-blueprint/) | Intelligent Rust quality methodology — analyzes your project and configures 9 dimensions of quality tooling (with WASM support) |
-| [nvim-lua-blueprint](plugins/nvim-lua-blueprint/) | Intelligent Neovim Lua plugin quality methodology — analyzes your plugin and configures 9 dimensions of quality tooling |
+| [blueprint](plugins/blueprint/) | Quality methodology for Python, .NET, Rust, and Neovim Lua — analyzes your project and configures 9 dimensions of quality tooling (16 skills: 4 languages x setup/audit/update/explain) |
 | [github-issues](plugins/github-issues/) | Intelligent GitHub issue management — natural language queries, codebase-aware creation, progressive refinement (epics → user stories) |
 | [github-releases](plugins/github-releases/) | Intelligent GitHub release management — version detection, conventional commit analysis, release notes generation |
 | [git-auto-commit](plugins/git-auto-commit/) | Fail-fast cascade checker — enforces staging, version bumps, conventional commits, and push via Stop hook |
@@ -39,5 +36,5 @@ Then install individual plugins:
 ```bash
 # Test a specific plugin against a target project
 cd /path/to/target-project
-claude --plugin-dir /path/to/cc-plugins/plugins/python-blueprint
+claude --plugin-dir /path/to/cc-plugins/plugins/blueprint
 ```

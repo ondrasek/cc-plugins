@@ -9,26 +9,12 @@ A multi-plugin marketplace repo for Claude Code. Each plugin lives in its own se
 ```
 .claude-plugin/marketplace.json  — Marketplace manifest (lists all plugins)
 plugins/
-  python-blueprint/              — Python quality methodology plugin
+  blueprint/                     — Multi-language quality methodology plugin
     .claude-plugin/plugin.json   — Plugin manifest
-    skills/                      — setup, audit, update, explain
+    skills/shared/references/    — Shared methodology framework and workflows
+    skills/{lang}-{skill}/       — 16 skills (python/dotnet/rust/nvim-lua × setup/audit/update/explain)
     hooks/hooks.json             — Plugin-level hook registrations
-    scripts/per-edit-fix.sh      — Plugin-level per-edit auto-fix
-  dotnet-blueprint/              — .NET quality methodology plugin
-    .claude-plugin/plugin.json   — Plugin manifest
-    skills/                      — setup, audit, update, explain
-    hooks/hooks.json             — Plugin-level hook registrations
-    scripts/per-edit-fix.sh      — Plugin-level per-edit auto-fix
-  rust-blueprint/                — Rust quality methodology plugin
-    .claude-plugin/plugin.json   — Plugin manifest
-    skills/                      — setup, audit, update, explain
-    hooks/hooks.json             — Plugin-level hook registrations
-    scripts/per-edit-fix.sh      — Plugin-level per-edit auto-fix
-  nvim-lua-blueprint/            — Neovim Lua plugin quality methodology plugin
-    .claude-plugin/plugin.json   — Plugin manifest
-    skills/                      — setup, audit, update, explain
-    hooks/hooks.json             — Plugin-level hook registrations
-    scripts/per-edit-fix.sh      — Plugin-level per-edit auto-fix
+    scripts/per-edit-fix.sh      — Multi-language per-edit auto-fix (routes by extension)
   github-issues/                 — GitHub issue management utility plugin
     .claude-plugin/plugin.json   — Plugin manifest
     skills/                      — triage, manage, refine, create, develop, recommend, organize
@@ -76,7 +62,7 @@ When creating or modifying skills in this repo, **always research the latest Ant
 
 ```bash
 # From a target project directory:
-claude --plugin-dir /path/to/cc-plugins/plugins/python-blueprint
+claude --plugin-dir /path/to/cc-plugins/plugins/blueprint
 ```
 
 ### Adding a new plugin
@@ -86,87 +72,43 @@ claude --plugin-dir /path/to/cc-plugins/plugins/python-blueprint
 3. Create a `plugins/<plugin-name>/README.md`
 4. Add the plugin to the root README table
 
-## python-blueprint Plugin
+## blueprint Plugin
 
 ### Key files to understand
 
-- `plugins/python-blueprint/skills/setup/methodology.md` — the intellectual core: 8 quality dimensions defined as roles, hook output format, fail-fast design
-- `plugins/python-blueprint/skills/setup/SKILL.md` — the setup workflow including reviewer subagent
-- `plugins/python-blueprint/skills/setup/templates/` — structural references for generated configs
+- `plugins/blueprint/skills/shared/references/methodology-framework.md` — shared principles, hook architecture, exit codes, CC hygiene
+- `plugins/blueprint/skills/shared/references/setup-workflow.md` — shared 6-phase setup workflow
+- `plugins/blueprint/skills/{lang}-setup/references/methodology.md` — tech-specific 9 dimensions, thresholds, adaptation rules
+- `plugins/blueprint/skills/{lang}-setup/references/analysis-checklist.md` — tech-specific project analysis checklist
+- `plugins/blueprint/skills/{lang}-setup/templates/` — annotated config templates per language
 
 ### Conventions
 
 - Methodology defines **roles** (what to check), not tools. The setup skill researches tools dynamically.
-- Templates use shell variables (`${PACKAGE_MANAGER_RUN}`, `${SOURCE_DIR}`, etc.) for customization
-- Plugin-level hooks use `${CLAUDE_PLUGIN_ROOT}` for path resolution
+- Shared workflows in `skills/shared/references/` — tech-specific SKILL.md files reference them
+- Templates use shell variables for customization (language-specific: `${PACKAGE_MANAGER_RUN}`, `${SOLUTION_FILE}`, `${WORKSPACE_FLAG}`, etc.)
+- Plugin-level hook (`scripts/per-edit-fix.sh`) routes by file extension: `.py` → ruff, `.cs` → dotnet format, `.rs` → cargo fmt, `.lua` → stylua
 - Hook output is structured as a prompt: what failed, tool output, diagnostic hint, action directive
 - Quality gate is fail-fast: one error at a time, exit code 2
 
-### Quality Methodology (8 Dimensions)
+### Quality Methodology (9 Dimensions)
 
 1. **Testing & Coverage** — run tests, enforce coverage threshold
 2. **Linting & Formatting** — consistent style, auto-fix on edit
-3. **Type Safety** — static type analysis
+3. **Type Safety** — static type analysis or compiler strictness
 4. **Security Analysis** — vulnerability pattern detection
-5. **Code Complexity** — cyclomatic complexity limits
+5. **Code Complexity** — cyclomatic/cognitive complexity limits
 6. **Dead Code & Modernization** — unused code, modern idioms
-7. **Documentation** — docstring coverage
-8. **Architecture & Import Discipline** — import boundaries, dependency hygiene
+7. **Documentation** — documentation coverage on public API
+8. **Architecture & Import Discipline** — module boundaries, dependency hygiene
+9. **Version Discipline** — semver 2.0 validation, bump enforcement
 
-Each dimension defines a role. The setup skill researches and selects the best current tools to fill each role.
+### Language-Specific Notes
 
-## dotnet-blueprint Plugin
-
-### Key files to understand
-
-- `plugins/dotnet-blueprint/skills/setup/methodology.md` — the intellectual core: 8 quality dimensions defined as roles, hook output format, fail-fast design (adapted for .NET)
-- `plugins/dotnet-blueprint/skills/setup/SKILL.md` — the setup workflow including reviewer subagent
-- `plugins/dotnet-blueprint/skills/setup/templates/` — structural references for generated configs
-
-### .NET-Specific Conventions
-
-- Same role-based methodology as python-blueprint, adapted for .NET ecosystem
-- Templates use shell variables (`${SOLUTION_FILE}`, `${SOURCE_DIR}`, etc.) for customization
-- Config centralization via `Directory.Build.props` and `.editorconfig`
-- Roslyn analyzers preferred over external CLI tools (run during `dotnet build`)
-- Same hook architecture: fail-fast quality gate, per-edit auto-fix, session-start hygiene
-
-## rust-blueprint Plugin
-
-### Key files to understand
-
-- `plugins/rust-blueprint/skills/setup/methodology.md` — the intellectual core: 8 quality dimensions defined as roles, hook output format, fail-fast design (adapted for Rust)
-- `plugins/rust-blueprint/skills/setup/SKILL.md` — the setup workflow including reviewer subagent
-- `plugins/rust-blueprint/skills/setup/templates/` — structural references for generated configs
-
-### Rust-Specific Conventions
-
-- Same role-based methodology as python-blueprint, adapted for Rust ecosystem
-- Templates use shell variables (`${WORKSPACE_FLAG}`, `${MSRV}`, `${COVERAGE_THRESHOLD}`, etc.) for customization
-- Config via `Cargo.toml` `[lints]` section, `clippy.toml`, `rustfmt.toml`, `deny.toml`
-- clippy preferred as the single linter (covers style, correctness, performance, complexity)
-- WASM target detection and adaptation (wasm-pack, wasm-bindgen, wasm32-* targets)
-- Same hook architecture: fail-fast quality gate, per-edit auto-fix, session-start hygiene
-
-## nvim-lua-blueprint Plugin
-
-### Key files to understand
-
-- `plugins/nvim-lua-blueprint/skills/setup/methodology.md` — the intellectual core: 9 quality dimensions defined as roles, hook output format, fail-fast design (adapted for Neovim Lua)
-- `plugins/nvim-lua-blueprint/skills/setup/SKILL.md` — the setup workflow including reviewer subagent
-- `plugins/nvim-lua-blueprint/skills/setup/templates/` — structural references for generated configs
-
-### Neovim Lua-Specific Conventions
-
-- Same role-based methodology as python-blueprint, adapted for Neovim Lua plugin ecosystem
-- Templates use shell variables (`${SOURCE_DIR}`, `${TEST_COMMAND}`, `${PLUGIN_NAME}`, etc.) for customization
-- Config via separate files: `selene.toml` + `vim.toml`, `.stylua.toml`, `.luacov`, `.luarc.json`
-- Always LuaJIT/Lua 5.1 (Neovim's embedded Lua)
-- Selene with `std = "vim"` for Neovim global awareness
-- Test framework detection: plenary.nvim, mini.test, busted
-- Per-edit hook runs StyLua only (selene has no `--fix` flag)
-- Security dimension is limited (no Lua equivalent of bandit/cargo-audit)
-- Same hook architecture: fail-fast quality gate, per-edit auto-fix, session-start hygiene
+- **Python**: pyproject.toml config, ruff/pyright/bandit ecosystem, pre-commit hooks, deptry for deps
+- **.NET**: Directory.Build.props + .editorconfig centralization, Roslyn analyzers preferred, dotnet format
+- **Rust**: Cargo.toml `[lints]` + clippy.toml/rustfmt.toml/deny.toml, WASM target detection
+- **Neovim Lua**: selene (std="vim") + stylua, LuaJIT/Lua 5.1 only, plenary/mini.test/busted detection
 
 ## github-issues Plugin
 

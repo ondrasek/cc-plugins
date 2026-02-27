@@ -1,9 +1,0 @@
-{
-  "name": "rust-blueprint",
-  "version": "0.2.1",
-  "description": "Intelligent Rust quality methodology plugin for Claude Code",
-  "author": {
-    "name": "Ondrej (Ondra) Krajicek",
-    "email": "me@ondrejkrajicek.com"
-  }
-}

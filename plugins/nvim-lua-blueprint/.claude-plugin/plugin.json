@@ -1,9 +1,0 @@
-{
-  "name": "nvim-lua-blueprint",
-  "version": "0.2.0",
-  "description": "Intelligent Neovim Lua plugin quality methodology for Claude Code",
-  "author": {
-    "name": "Ondrej (Ondra) Krajicek",
-    "email": "me@ondrejkrajicek.com"
-  }
-}

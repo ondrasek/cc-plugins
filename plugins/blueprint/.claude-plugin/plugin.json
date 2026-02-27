@@ -1,0 +1,9 @@
+{
+  "name": "blueprint",
+  "version": "1.0.0",
+  "description": "Quality methodology for Python, .NET, Rust, and Neovim Lua projects",
+  "author": {
+    "name": "Ondrej (Ondra) Krajicek",
+    "email": "me@ondrejkrajicek.com"
+  }
+}
