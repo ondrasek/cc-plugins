@@ -1,4 +1,4 @@
-# obsidian-vault
+# obsidian-blueprint
 
 A Claude Code plugin that applies quality methodology to git-managed Obsidian vaults. It analyzes vault structure, validates content quality, and configures hooks and CI to maintain consistency across notes.
 
@@ -6,11 +6,11 @@ A Claude Code plugin that applies quality methodology to git-managed Obsidian va
 
 | Skill | Description |
 |-------|-------------|
-| `/obsidian-vault:vault-setup` | Analyze vault structure and configure quality tooling for an Obsidian vault |
-| `/obsidian-vault:vault-audit` | Read-only gap analysis for vault content quality |
-| `/obsidian-vault:vault-update` | Incremental methodology updates for an existing vault setup |
-| `/obsidian-vault:vault-explain` | Q&A about the vault quality methodology |
-| `/obsidian-vault:vault-calendar` | Calendar-based note management and daily/weekly/periodic note workflows |
+| `/obsidian-blueprint:vault-setup` | Analyze vault structure and configure quality tooling for an Obsidian vault |
+| `/obsidian-blueprint:vault-audit` | Read-only gap analysis for vault content quality |
+| `/obsidian-blueprint:vault-update` | Incremental methodology updates for an existing vault setup |
+| `/obsidian-blueprint:vault-explain` | Q&A about the vault quality methodology |
+| `/obsidian-blueprint:vault-calendar` | Calendar-based note management and daily/weekly/periodic note workflows |
 
 ## Setup Workflow (6 Phases)
 

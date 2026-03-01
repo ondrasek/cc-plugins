@@ -20,7 +20,7 @@ plugins/
     skills/                      — triage, manage, refine, create, develop, recommend, organize
     hooks/hooks.json             — Plugin-level hook registrations
     scripts/                     — session-start, commit-reference-check, stop-reminder
-  obsidian-vault/                  — Obsidian vault quality methodology plugin
+  obsidian-blueprint/                  — Obsidian vault quality methodology plugin
     .claude-plugin/plugin.json   — Plugin manifest
     skills/shared/references/    — Shared methodology framework and workflows
     skills/vault-{skill}/        — 5 skills (setup/audit/update/explain/calendar)
@@ -150,16 +150,16 @@ Branch convention: `<issue-number>-<description>` (e.g., `42-fix-bug` → issue 
 6. **recommend** — analyze open issues against codebase activity, severity, and trends to suggest what to work on next
 7. **organize** — lock, unlock, pin, unpin, transfer
 
-## obsidian-vault Plugin
+## obsidian-blueprint Plugin
 
 ### Key files to understand
 
-- `plugins/obsidian-vault/skills/shared/references/methodology-framework.md` — shared principles, hook architecture, exit codes, CC hygiene
-- `plugins/obsidian-vault/skills/shared/references/setup-workflow.md` — shared 6-phase setup workflow
-- `plugins/obsidian-vault/skills/vault-setup/references/methodology.md` — 7 vault dimensions, thresholds, adaptation rules
-- `plugins/obsidian-vault/skills/vault-setup/references/analysis-checklist.md` — vault analysis checklist
-- `plugins/obsidian-vault/skills/vault-setup/references/workflow-catalog.md` — GitHub workflow categories (roles, not templates)
-- `plugins/obsidian-vault/skills/vault-setup/templates/` — annotated config templates
+- `plugins/obsidian-blueprint/skills/shared/references/methodology-framework.md` — shared principles, hook architecture, exit codes, CC hygiene
+- `plugins/obsidian-blueprint/skills/shared/references/setup-workflow.md` — shared 6-phase setup workflow
+- `plugins/obsidian-blueprint/skills/vault-setup/references/methodology.md` — 7 vault dimensions, thresholds, adaptation rules
+- `plugins/obsidian-blueprint/skills/vault-setup/references/analysis-checklist.md` — vault analysis checklist
+- `plugins/obsidian-blueprint/skills/vault-setup/references/workflow-catalog.md` — GitHub workflow categories (roles, not templates)
+- `plugins/obsidian-blueprint/skills/vault-setup/templates/` — annotated config templates
 
 ### Conventions
 

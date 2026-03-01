@@ -54,7 +54,7 @@ Expected workflows (from workflow-catalog.md categories):
 
 ### 5. Report
 
-Present dimension/hook/CI coverage tables with recommendations. Suggest running `/obsidian-vault:vault-setup` to configure missing dimensions.
+Present dimension/hook/CI coverage tables with recommendations. Suggest running `/obsidian-blueprint:vault-setup` to configure missing dimensions.
 
 ```
 ## Audit Results
@@ -76,7 +76,7 @@ Present dimension/hook/CI coverage tables with recommendations. Suggest running 
 - ...
 
 ### Recommendations
-1. Run `/obsidian-vault:vault-setup` to configure missing dimensions
+1. Run `/obsidian-blueprint:vault-setup` to configure missing dimensions
 2. ...
 ```
 

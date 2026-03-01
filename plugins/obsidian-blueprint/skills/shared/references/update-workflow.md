@@ -1,6 +1,6 @@
 # Update Workflow
 
-The update skill applies incremental methodology updates to a vault previously configured with the obsidian-vault plugin. The vault-specific update SKILL.md provides the details while following this shared structure.
+The update skill applies incremental methodology updates to a vault previously configured with the obsidian-blueprint plugin. The vault-specific update SKILL.md provides the details while following this shared structure.
 
 ---
 

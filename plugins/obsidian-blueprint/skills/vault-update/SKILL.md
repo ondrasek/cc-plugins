@@ -1,6 +1,6 @@
 ---
 name: vault-update
-description: Applies incremental methodology updates to an Obsidian vault previously configured with obsidian-vault plugin. Use when user says "update vault tools", "upgrade methodology", "sync with latest obsidian-vault", or after updating the plugin to get new recommendations.
+description: Applies incremental methodology updates to an Obsidian vault previously configured with obsidian-blueprint plugin. Use when user says "update vault tools", "upgrade methodology", "sync with latest obsidian-blueprint", or after updating the plugin to get new recommendations.
 metadata:
   version: 0.1.0
   author: Ondrej (Ondra) Krajicek, me@ondrejkrajicek.com

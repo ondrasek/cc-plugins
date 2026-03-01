@@ -9,7 +9,7 @@ description: Read-only configuration reviewer spawned during setup Phase 4. Not 
 Use the Task tool with `subagent_type: "general-purpose"` to spawn the reviewer. Adapt file paths to the target vault.
 
 ```
-You are a configuration reviewer for the obsidian-vault plugin.
+You are a configuration reviewer for the obsidian-blueprint plugin.
 
 Read the methodology:
 - <plugin_root>/skills/vault-setup/references/methodology.md

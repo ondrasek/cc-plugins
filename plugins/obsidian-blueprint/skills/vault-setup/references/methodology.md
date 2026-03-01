@@ -1,6 +1,6 @@
 # Vault Quality Methodology
 
-This document defines the quality methodology applied by the `obsidian-vault` plugin. It is organized into 7 quality dimensions, each defining a **role** (what needs to happen) rather than prescribing specific tools.
+This document defines the quality methodology applied by the `obsidian-blueprint` plugin. It is organized into 7 quality dimensions, each defining a **role** (what needs to happen) rather than prescribing specific tools.
 
 The setup skill reads this document to understand what to apply, then researches current best-in-class tools to fill each role.
 

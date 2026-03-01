@@ -29,15 +29,15 @@ Read-only — does not modify any files.
 
 **"Should I use all 7 dimensions?"** -- Principles: incremental adoption. Start with frontmatter integrity and git hygiene (the foundation), then add link integrity and spelling. Template compliance and tag hygiene are most valuable for larger vaults with established conventions. Adopt dimensions as the vault matures.
 
-**"What about kepano/obsidian-skills?"** -- Companion plugin recommendation. The obsidian-vault plugin focuses on quality methodology (dimensions, hooks, gates). kepano/obsidian-skills provides Obsidian-specific capabilities: note creation patterns, plugin management, vault navigation. They complement each other — quality methodology plus vault operations.
+**"What about kepano/obsidian-skills?"** -- Companion plugin recommendation. The obsidian-blueprint plugin focuses on quality methodology (dimensions, hooks, gates). kepano/obsidian-skills provides Obsidian-specific capabilities: note creation patterns, plugin management, vault navigation. They complement each other — quality methodology plus vault operations.
 
 ## Behavior
 
 1. Read the vault-specific methodology references to answer questions
 2. Cite which document and section the answer comes from
 3. If a question is outside the methodology's scope, say so
-4. Suggest running `/obsidian-vault:vault-audit` if the user wants to see their vault's status
-5. Suggest running `/obsidian-vault:vault-setup` if the user wants to apply changes
+4. Suggest running `/obsidian-blueprint:vault-audit` if the user wants to see their vault's status
+5. Suggest running `/obsidian-blueprint:vault-setup` if the user wants to apply changes
 
 ## Answer Format
 

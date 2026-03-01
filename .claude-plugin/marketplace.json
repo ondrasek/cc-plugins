@@ -30,8 +30,8 @@
       "description": "Automated semantic versioning and GitHub releases from conventional commits"
     },
     {
-      "name": "obsidian-vault",
-      "source": "./plugins/obsidian-vault",
+      "name": "obsidian-blueprint",
+      "source": "./plugins/obsidian-blueprint",
       "description": "Quality methodology for git-managed Obsidian vaults — 7 dimensions of content quality plus calendar integration"
     }
   ]

@@ -25,7 +25,7 @@ Then install individual plugins:
 | [github-releases](plugins/github-releases/) | Intelligent GitHub release management — version detection, conventional commit analysis, release notes generation |
 | [git-auto-commit](plugins/git-auto-commit/) | Fail-fast cascade checker — enforces staging, version bumps, conventional commits, and push via Stop hook |
 | [auto-release](plugins/auto-release/) | Automated semantic versioning and GitHub releases from conventional commits |
-| [obsidian-vault](plugins/obsidian-vault/) | Quality methodology for git-managed Obsidian vaults — analyzes vault structure and configures 7 dimensions of content quality (5 skills: setup/audit/update/explain/calendar) |
+| [obsidian-blueprint](plugins/obsidian-blueprint/) | Quality methodology for git-managed Obsidian vaults — analyzes vault structure and configures 7 dimensions of content quality (5 skills: setup/audit/update/explain/calendar) |
 ## Standalone Scripts
 
 | Script | Description |
