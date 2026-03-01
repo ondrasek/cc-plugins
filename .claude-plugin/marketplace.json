@@ -28,6 +28,11 @@
       "name": "auto-release",
       "source": "./plugins/auto-release",
       "description": "Automated semantic versioning and GitHub releases from conventional commits"
+    },
+    {
+      "name": "obsidian-vault",
+      "source": "./plugins/obsidian-vault",
+      "description": "Quality methodology for git-managed Obsidian vaults — 7 dimensions of content quality plus calendar integration"
     }
   ]
 }
