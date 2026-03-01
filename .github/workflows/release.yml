@@ -131,6 +131,8 @@ jobs:
         run: |
           NEW_VERSION="${{ steps.version.outputs.new_version }}"
 
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION"
           git push origin "$NEW_VERSION"
 
