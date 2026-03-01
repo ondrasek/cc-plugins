@@ -17,7 +17,9 @@ Gives Claude Code natural language access to GitHub issues — querying, creatin
 | **triage** | "show my issues", "what's assigned to me", "summarize issue #42" | Query and inspect issues with natural language |
 | **manage** | "create an issue", "file a bug", "close issue #42", "add labels" | Full CRUD lifecycle with codebase context |
 | **refine** | "refine issue #42", "make this an epic", "split into stories" | Progressive refinement: rough ideas → epics → user stories (INVEST) |
+| **create** | "create issue", "new issue", "file a bug", "report a problem" | Research-driven issue creation with immediate refinement |
 | **develop** | "start working on issue #42", "create a branch" | Bridge issues to development workflow |
+| **review-pr** | "review my PR", "fix CI", "address review comments", "get this PR merged" | Shepherd a PR through CI checks and code review to merge |
 | **recommend** | "what should I work on", "recommend an issue", "pick my next task" | Analyze issues against codebase activity, severity, and trends to suggest what to tackle next |
 | **organize** | "lock issue", "pin this", "transfer to another repo" | Administrative operations |
 

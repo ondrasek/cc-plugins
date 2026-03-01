@@ -17,7 +17,7 @@ plugins/
     scripts/per-edit-fix.sh      — Multi-language per-edit auto-fix (routes by extension)
   github-issues/                 — GitHub issue management utility plugin
     .claude-plugin/plugin.json   — Plugin manifest
-    skills/                      — triage, manage, refine, create, develop, recommend, organize
+    skills/                      — triage, manage, refine, create, develop, review-pr, recommend, organize
     hooks/hooks.json             — Plugin-level hook registrations
     scripts/                     — session-start, commit-reference-check, stop-reminder
   obsidian-blueprint/                  — Obsidian vault quality methodology plugin
@@ -146,15 +146,16 @@ claude --plugin-dir /path/to/cc-plugins/plugins/blueprint
 
 Branch convention: `<issue-number>-<description>` (e.g., `42-fix-bug` → issue #42). Non-matching branches are silently ignored.
 
-### Skills (7)
+### Skills (8)
 
 1. **triage** — read-only querying, viewing, and status dashboard
 2. **manage** — CRUD lifecycle, batch operations, label management
 3. **refine** — progressive refinement: rough ideas → epics → user stories (INVEST, SPIDR)
 4. **create** — research-driven issue creation with immediate refinement
 5. **develop** — issue → branch → PR workflow bridge
-6. **recommend** — analyze open issues against codebase activity, severity, and trends to suggest what to work on next
-7. **organize** — lock, unlock, pin, unpin, transfer
+6. **review-pr** — shepherd a PR through CI checks and code review to merge (uses GraphQL for review threads)
+7. **recommend** — analyze open issues against codebase activity, severity, and trends to suggest what to work on next
+8. **organize** — lock, unlock, pin, unpin, transfer
 
 ## calendar-access Plugin
 

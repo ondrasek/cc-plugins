@@ -1,6 +1,6 @@
 ---
 type: reference
-used_by: triage, manage, refine, develop, organize, create, recommend, issue-reviewer
+used_by: triage, manage, refine, develop, organize, create, recommend, review-pr, issue-reviewer
 description: Recommended label categories, naming conventions, and color coding for GitHub issue labels.
 ---
 
