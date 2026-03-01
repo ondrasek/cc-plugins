@@ -1,0 +1,42 @@
+# Obsidian vault .gitignore
+#
+# PHILOSOPHY: Only gitignore VOLATILE files — workspace state and caches that
+# change on every Obsidian launch and cause constant merge conflicts.
+#
+# TRACKED (shared config — DO NOT gitignore these):
+#   .obsidian/app.json              — editor settings (tab size, vim mode, etc.)
+#   .obsidian/appearance.json       — theme, font size, CSS snippet toggles
+#   .obsidian/community-plugins.json — list of installed community plugins
+#   .obsidian/core-plugins.json     — which core plugins are enabled
+#   .obsidian/hotkeys.json          — custom keyboard shortcuts
+#   .obsidian/plugins/*/main.js     — plugin code (needed for sync)
+#   .obsidian/plugins/*/manifest.json
+#   .obsidian/plugins/*/styles.css
+#   .obsidian/plugins/*/data.json   — plugin settings
+#   .obsidian/snippets/             — CSS snippets
+#   .obsidian/templates/            — core template plugin settings
+#
+# These shared config files define the vault's behavior and should be
+# consistent across all users/devices.
+
+# Obsidian volatile files — change on every launch, cause merge conflicts
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+.obsidian/.obsidian
+
+# Obsidian trash
+.trash/
+
+# OS metadata files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude Code local settings (not shared)
+.claude/settings.local.json
+
+# Editor-specific
+*.swp
+*.swo
+*~
