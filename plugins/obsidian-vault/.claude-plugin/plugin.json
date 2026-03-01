@@ -1,0 +1,9 @@
+{
+  "name": "obsidian-vault",
+  "version": "0.1.0",
+  "description": "Quality methodology for git-managed Obsidian vaults — analyzes vault structure and configures 7 dimensions of content quality",
+  "author": {
+    "name": "Ondrej (Ondra) Krajicek",
+    "email": "me@ondrejkrajicek.com"
+  }
+}
