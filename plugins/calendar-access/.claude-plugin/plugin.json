@@ -1,0 +1,9 @@
+{
+  "name": "calendar-access",
+  "version": "0.1.0",
+  "description": "Read-only calendar access via CLI tools — supports Google Calendar (gcalcli) and Microsoft 365 (Azure CLI + Graph API)",
+  "author": {
+    "name": "Ondrej (Ondra) Krajicek",
+    "email": "me@ondrejkrajicek.com"
+  }
+}

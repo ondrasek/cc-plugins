@@ -33,6 +33,11 @@
       "name": "obsidian-blueprint",
       "source": "./plugins/obsidian-blueprint",
       "description": "Quality methodology for git-managed Obsidian vaults — 7 dimensions of content quality plus calendar integration"
+    },
+    {
+      "name": "calendar-access",
+      "source": "./plugins/calendar-access",
+      "description": "Read-only calendar access via CLI tools — Google Calendar (gcalcli) and Microsoft 365 (Azure CLI + Graph API)"
     }
   ]
 }

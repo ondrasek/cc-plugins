@@ -26,6 +26,12 @@ plugins/
     skills/vault-{skill}/        — 5 skills (setup/audit/update/explain/calendar)
     hooks/hooks.json             — Plugin-level hook registrations
     scripts/                     — per-edit-fix (frontmatter), session-start (vault detection)
+  calendar-access/                     — Read-only calendar access plugin
+    .claude-plugin/plugin.json   — Plugin manifest
+    skills/shared/references/    — Provider detection, CLI commands, field mapping
+    skills/{skill}/              — 10 skills (setup/view/search/list-calendars + 6 shortcuts)
+    hooks/hooks.json             — Plugin-level hook registrations (SessionStart only)
+    scripts/session-start.sh     — Show today's upcoming events
 plans/                           — Development phase documentation
 ```
 
@@ -149,6 +155,32 @@ Branch convention: `<issue-number>-<description>` (e.g., `42-fix-bug` → issue 
 5. **develop** — issue → branch → PR workflow bridge
 6. **recommend** — analyze open issues against codebase activity, severity, and trends to suggest what to work on next
 7. **organize** — lock, unlock, pin, unpin, transfer
+
+## calendar-access Plugin
+
+### Key files
+
+- `plugins/calendar-access/skills/shared/references/cross-cutting.md` — provider detection, output format, read-only guarantee
+- `plugins/calendar-access/skills/shared/references/providers.md` — CLI commands, parsing, field mapping
+- `plugins/calendar-access/skills/setup/references/auth-guide.md` — auth steps for Google + Microsoft
+
+### Conventions
+
+- **Read-only** — never creates, modifies, or deletes events
+- **Pure CLI** — gcalcli (Google) + Azure CLI + curl against Graph API (Microsoft)
+- **Custom Entra ID app required** — Azure CLI's built-in app lacks `Calendars.Read`; setup guides through app registration
+- **`calendarView` endpoint** for Microsoft — expands recurring events (not `/events`)
+- **Multi-provider merge** — both configured → results merge chronologically
+- **Config**: Microsoft client ID in `~/.config/calendar-access/config.json`, Google in `~/.gcalcli_oauth`
+
+### Hook (1)
+
+- **SessionStart** — shows up to 4 upcoming events for rest of today (non-blocking, silent if unconfigured)
+
+### Skills (10)
+
+Core: **setup**, **view**, **search**, **list-calendars**
+Shortcuts: **today**, **tomorrow**, **next-week**, **next-month**, **last-week**, **last-month**
 
 ## obsidian-blueprint Plugin
 

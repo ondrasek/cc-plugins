@@ -26,6 +26,8 @@ Then install individual plugins:
 | [git-auto-commit](plugins/git-auto-commit/) | Fail-fast cascade checker — enforces staging, version bumps, conventional commits, and push via Stop hook |
 | [auto-release](plugins/auto-release/) | Automated semantic versioning and GitHub releases from conventional commits |
 | [obsidian-blueprint](plugins/obsidian-blueprint/) | Quality methodology for git-managed Obsidian vaults — analyzes vault structure and configures 7 dimensions of content quality (5 skills: setup/audit/update/explain/calendar) |
+| [calendar-access](plugins/calendar-access/) | Read-only calendar access — Google Calendar (gcalcli) and Microsoft 365 (Azure CLI + Graph API), with SessionStart hook for today's events (10 skills: setup/view/search/list-calendars + 6 shortcuts) |
+
 ## Standalone Scripts
 
 | Script | Description |
