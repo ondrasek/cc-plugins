@@ -20,6 +20,12 @@ plugins/
     skills/                      — triage, manage, refine, create, develop, recommend, organize
     hooks/hooks.json             — Plugin-level hook registrations
     scripts/                     — session-start, commit-reference-check, stop-reminder
+  obsidian-vault/                  — Obsidian vault quality methodology plugin
+    .claude-plugin/plugin.json   — Plugin manifest
+    skills/shared/references/    — Shared methodology framework and workflows
+    skills/vault-{skill}/        — 5 skills (setup/audit/update/explain/calendar)
+    hooks/hooks.json             — Plugin-level hook registrations
+    scripts/                     — per-edit-fix (frontmatter), session-start (vault detection)
 plans/                           — Development phase documentation
 ```
 
@@ -143,3 +149,42 @@ Branch convention: `<issue-number>-<description>` (e.g., `42-fix-bug` → issue 
 5. **develop** — issue → branch → PR workflow bridge
 6. **recommend** — analyze open issues against codebase activity, severity, and trends to suggest what to work on next
 7. **organize** — lock, unlock, pin, unpin, transfer
+
+## obsidian-vault Plugin
+
+### Key files to understand
+
+- `plugins/obsidian-vault/skills/shared/references/methodology-framework.md` — shared principles, hook architecture, exit codes, CC hygiene
+- `plugins/obsidian-vault/skills/shared/references/setup-workflow.md` — shared 6-phase setup workflow
+- `plugins/obsidian-vault/skills/vault-setup/references/methodology.md` — 7 vault dimensions, thresholds, adaptation rules
+- `plugins/obsidian-vault/skills/vault-setup/references/analysis-checklist.md` — vault analysis checklist
+- `plugins/obsidian-vault/skills/vault-setup/references/workflow-catalog.md` — GitHub workflow categories (roles, not templates)
+- `plugins/obsidian-vault/skills/vault-setup/templates/` — annotated config templates
+
+### Conventions
+
+- Methodology defines **roles** (what to check), not tools. The setup skill researches tools dynamically.
+- Shared workflows in `skills/shared/references/` — vault-specific SKILL.md files reference them
+- Templates use shell variables for customization (`${VAULT_ROOT}`, `${REQUIRED_FIELDS}`, `${DAILY_NOTES_FORMAT}`, etc.)
+- Plugin-level hook (`scripts/per-edit-fix.sh`) validates YAML frontmatter, ISO dates, runs codespell on .md files
+- `.obsidian/` is tracked in git — only volatile files (workspace.json, cache/) are gitignored
+- Python3 used for YAML parsing (universally available, avoids yq version fragmentation)
+- Recommends [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) as companion plugin
+
+### Quality Methodology (7 Dimensions)
+
+1. **Frontmatter Integrity** — valid YAML, required fields, ISO dates
+2. **Link Integrity** — broken wikilinks, missing embeds, orphan aliases
+3. **Naming Conventions** — filename patterns, no special chars, daily note format
+4. **Template Compliance** — notes match template structure/fields
+5. **Tag Hygiene** — orphan tags, case consistency, synonyms
+6. **Documentation Quality** — spelling, heading hierarchy, empty notes
+7. **Git Hygiene** — volatile .obsidian/ gitignored, no tracked binaries
+
+### Skills (5)
+
+1. **vault-setup** — 6-phase setup: analyze vault → research tools & workflows → configure
+2. **vault-audit** — read-only gap analysis against 7 dimensions
+3. **vault-update** — incremental methodology updates
+4. **vault-explain** — Q&A about vault methodology
+5. **vault-calendar** — pull Google/M365 calendar events into daily notes
