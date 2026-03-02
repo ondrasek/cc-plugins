@@ -63,10 +63,14 @@ commit_output=$(git commit --no-gpg-sign -m "$commit_msg
 
 Co-Authored-By: ${CO_AUTHOR}" 2>&1) || {
     echo "" >&2
-    echo "[auto-commit${WT_LABEL}] Pre-commit hook failed:" >&2
+    echo "AUTO-COMMIT FAILED [pre-commit hook]${WT_LABEL}:" >&2
+    echo "Command: git commit" >&2
+    echo "" >&2
     echo "$commit_output" >&2
     echo "" >&2
-    echo "Please fix the issues above." >&2
+    echo "Hint: The pre-commit hook rejected the commit. Read the error output above to identify which check failed and which files are affected. Fix the source code issues, then the auto-commit will re-run when you stop again." >&2
+    echo "" >&2
+    echo "ACTION REQUIRED: You MUST fix the issue shown above. Do NOT stop or explain — read the failing file, edit the source code to resolve it, and the auto-commit will re-run automatically when you stop." >&2
     exit 2
 }
 

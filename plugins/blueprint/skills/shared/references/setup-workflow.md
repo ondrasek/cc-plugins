@@ -47,11 +47,15 @@ Apply the approved plan. Read each template in `templates/` for the structural p
 **Common files to create/update** (read corresponding template for each):
 
 1. **Tool config files** — Technology-specific configuration files. Merge into existing if present.
-2. **Hook scripts** (`.claude/hooks/`) — `quality-gate.sh`, `per-edit-fix.sh`, `session-start.sh`, optionally `auto-commit.sh`. Follow the run_check/fail pattern, write tool-specific hints. Make executable.
+2. **Hook scripts** (`.claude/hooks/`) — `quality-gate.sh`, `per-edit-fix.sh`, `session-start.sh`, optionally `auto-commit.sh`. **Every hook must follow these two principles**:
+   - **Fail-fast**: Stop at the first failure (exit 2). Do NOT collect multiple errors. This applies to ALL blocking hooks, including per-edit-fix.sh when it has multiple tools.
+   - **Descriptive output**: Every failure must include 4 parts in stderr: (1) what failed — check name and command, (2) tool output — raw errors with file paths and line numbers, (3) diagnostic hint — tool-specific instruction on how to investigate and fix, (4) action directive — tells Claude to fix immediately and states whether the hook re-runs automatically or must be re-run manually.
+   - Follow the `fail()` pattern from methodology-framework.md templates. Write tool-specific hints.
+   - Make executable (`chmod +x`).
 3. **`.claude/settings.json`** — Hook registrations. See `methodology-framework.md` for the correct format and matcher rules.
 4. **CI pipeline** — One job per enabled dimension. Merge into existing pipeline if present.
 5. **CLAUDE.md** — Create from template or append methodology reference to existing.
-6. **semver-check.sh** (`.claude/hooks/`) — PostToolUse/Bash hook for version bump enforcement. Only created when Dimension 9 is activated at level 3. Make executable.
+6. **semver-check.sh** (`.claude/hooks/`) — PostToolUse/Bash hook for version bump enforcement. Only created when Dimension 9 is activated at level 3. Must follow the same fail-fast and descriptive output principles. Make executable.
 
 Then install dev dependencies using the project's package manager.
 

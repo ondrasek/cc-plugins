@@ -33,16 +33,25 @@ Review against these criteria:
    a corresponding check in quality-gate.sh, a CI job, and tool config
    in pyproject.toml. Report any gaps.
 
-2. FAIL-FAST: quality-gate.sh must run checks sequentially and stop at
-   the first failure (exit 2). It must NOT collect errors. Verify the
-   script uses the run_check/run_check_nonempty pattern correctly.
+2. FAIL-FAST: ALL blocking hooks must run checks sequentially and stop
+   at the first failure (exit 2). They must NOT collect multiple errors.
+   - quality-gate.sh: uses run_check/run_check_nonempty pattern
+   - per-edit-fix.sh: if it has multiple tools (e.g., ruff + codespell),
+     each tool must call fail() and exit immediately on unfixable error.
+     It must NOT accumulate errors in a variable and report them all at once.
 
-3. HOOK OUTPUT FORMAT: Each check in quality-gate.sh must produce output
-   with: [check name], command run, tool output, diagnostic hint, and
-   action directive. Verify hints are tool-specific (not generic).
+3. HOOK OUTPUT FORMAT: Every failure in EVERY blocking hook must include
+   4 parts: (1) check name + command, (2) tool output, (3) tool-specific
+   diagnostic hint, (4) action directive stating whether hook re-runs
+   automatically. This applies to quality-gate.sh, per-edit-fix.sh,
+   auto-commit.sh, and semver-check.sh. Verify hints are specific (not
+   generic "fix the error" advice). Verify per-edit-fix.sh uses a fail()
+   function, not bare echo+exit.
 
-4. EXIT CODES: quality-gate.sh and per-edit-fix.sh must use exit 2 for
-   failures. session-start.sh must use exit 0 (non-blocking).
+4. EXIT CODES AND RERUN: quality-gate.sh, per-edit-fix.sh, auto-commit.sh,
+   and semver-check.sh must use exit 2 for failures. session-start.sh
+   must use exit 0 (non-blocking) and include the exact shell command
+   to re-run the check after fixing warnings.
 
 5. PATHS: All paths must be consistent — same source dir, test dir,
    and package name across pyproject.toml, hooks, CI, and pyrightconfig.

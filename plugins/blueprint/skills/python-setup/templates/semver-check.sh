@@ -111,20 +111,23 @@ fi
 if [ "$BASE_VERSION" = "$HEAD_VERSION" ]; then
   AFFECTED_FILES="$(echo "$CHANGED_FILES" | head -10 | sed 's/^/    - /')"
   cat >&2 <<EOF
-BLOCKED: Version not bumped.
+
+SEMVER CHECK FAILED [version-bump]:
+Command: git commit (post-commit version check)
 
 Source files changed since ${BASE_REF} but the version in ${VERSION_FILE} is still ${HEAD_VERSION}.
 
 Changed files (up to 10):
 ${AFFECTED_FILES}
 
-Action required: Determine the appropriate semver increment:
+Hint: Determine the appropriate semver increment:
 - PATCH (x.y.Z): bug fixes, minor tweaks, documentation changes
 - MINOR (x.Y.0): new features, backward-compatible enhancements
 - MAJOR (X.0.0): breaking changes to public API
 
-Update the version in ${VERSION_FILE}, then amend the commit:
+ACTION REQUIRED: You MUST update the version in ${VERSION_FILE}, then amend the commit:
   git add ${VERSION_FILE} && git commit --amend --no-edit
+Do NOT stop or explain — fix the version now. The check will re-run on the next commit.
 EOF
   exit 2
 fi

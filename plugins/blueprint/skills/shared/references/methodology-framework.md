@@ -48,22 +48,25 @@ The methodology uses four hook types:
 
 ### Fail-Fast Design
 
-The quality gate runs checks **sequentially and stops at the first failure**. It does NOT collect all errors and report them at once. This is intentional:
+**Every blocking hook** (not just quality-gate.sh) must run checks **sequentially and stop at the first failure**. It must NOT collect all errors and report them at once. This applies to `quality-gate.sh`, `per-edit-fix.sh`, `semver-check.sh`, and `auto-commit.sh`. This is intentional:
 
-- Claude fixes one issue at a time, then the gate re-runs
+- Claude fixes one issue at a time, then the hook re-runs
 - Prevents "lost in the middle" — a long list of errors causes Claude to skip or half-fix items
 - Each re-run confirms the previous fix didn't introduce new issues
 - Faster feedback: common failures (tests, lint) are checked first
 
+**Per-edit-fix hooks** with multiple tools (e.g., Python: ruff lint → ruff format → codespell) must stop at the first unfixable error and report only that one. Do not collect errors from all tools and dump them together.
+
 ### Hook Output as Prompt
 
-Hook stderr is fed directly to Claude as a prompt. The output must be structured to work well as an instruction, not just as a log message. Every failure output has three parts:
+Hook stderr is fed directly to Claude as a prompt. The output must be structured to work well as an instruction, not just as a log message. **Every failure output has four required parts**:
 
 1. **What failed** — the check name and command that was run
 2. **Tool output** — the raw error from the tool (file paths, line numbers, error codes)
 3. **Diagnostic hint** — a specific instruction telling Claude how to investigate and fix this type of failure
+4. **Action directive** — tells Claude to fix the issue immediately rather than explain or stop, and states whether the hook will re-run automatically
 
-The output ends with an **action directive** that tells Claude to fix the issue immediately rather than explain or stop.
+This applies to all hooks that can exit with code 2 — quality-gate.sh, per-edit-fix.sh, semver-check.sh, and auto-commit.sh. Non-blocking hooks (session-start.sh) should still include a rerun instruction (see below).
 
 ### Exit Code Convention
 
@@ -74,6 +77,20 @@ The output ends with an **action directive** that tells Claude to fix the issue 
 | 2 | Check failed — stderr is a fix instruction | Claude reads stderr and must fix the issue, then the hook re-runs |
 
 Exit code 2 is the key mechanism. It turns the hook into a feedback loop: fail → Claude fixes → hook re-runs → repeat until clean.
+
+### Rerun Behavior
+
+Different hooks re-run under different conditions. The action directive must tell Claude what triggers the re-run:
+
+| Hook | Event | Re-run Trigger |
+|------|-------|----------------|
+| `quality-gate.sh` | Stop | Claude fixes and tries to stop again → re-runs automatically |
+| `per-edit-fix.sh` | PostToolUse (Edit\|Write) | Claude edits a file to fix the issue → re-runs on the edited file |
+| `semver-check.sh` | PostToolUse (Bash) | Claude runs the git commit command again → re-runs automatically |
+| `auto-commit.sh` | Stop | Claude fixes pre-commit issues and tries to stop again → re-runs automatically |
+| `session-start.sh` | SessionStart | Does NOT re-run automatically. Must tell Claude the exact command to re-run manually |
+
+For hooks that do NOT re-run automatically (SessionStart), the output must include the **exact shell command** Claude should run to re-check after fixing warnings.
 
 ### Hint Writing Guidelines
 
@@ -105,6 +122,43 @@ fail() {
 
 run_check()          { local name="$1"; shift; OUTPUT=$("$@" 2>&1) || fail "$name" "$*" "$OUTPUT"; }
 run_check_nonempty() { local name="$1"; shift; OUTPUT=$("$@" 2>&1); [ -n "$OUTPUT" ] && fail "$name" "$*" "$OUTPUT"; }
+```
+
+### Per-Edit-Fix Template Pattern
+
+Per-edit hooks also follow fail-fast with structured output. The `fail()` pattern is similar to quality gate but adapted for single-file context:
+
+```bash
+fail() {
+    local name="$1" cmd="$2" output="$3" hint="$4"
+    echo "" >&2
+    echo "PER-EDIT CHECK FAILED [$name] in ${FILE_PATH}:" >&2
+    echo "Command: $cmd" >&2
+    echo "" >&2
+    echo "$output" >&2
+    echo "" >&2
+    if [ -n "$hint" ]; then
+        echo "Hint: $hint" >&2
+        echo "" >&2
+    fi
+    echo "ACTION REQUIRED: You MUST fix the issue shown above. Read the file at the reported line, edit the source code to resolve it, and the check will re-run on next edit." >&2
+    exit 2
+}
+```
+
+When a per-edit hook has multiple tools (e.g., Python: ruff lint → ruff format → codespell), each tool runs in sequence. **Stop at the first unfixable error** — do not accumulate errors from later tools.
+
+### Session-Start Template Pattern
+
+Session-start hooks are non-blocking (exit 0 always) but must still provide actionable output with rerun instructions:
+
+```bash
+if [ -n "$WARNINGS" ]; then
+    echo -e "$WARNINGS" >&2
+    echo "These are non-blocking warnings. Fix them during this session." >&2
+    echo "Re-run this check with: bash \"${CLAUDE_PROJECT_DIR:-.}\"/.claude/hooks/session-start.sh" >&2
+    exit 0
+fi
 ```
 
 ---

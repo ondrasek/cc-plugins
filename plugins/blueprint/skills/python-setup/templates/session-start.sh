@@ -27,7 +27,8 @@ fi
 
 if [ -n "$WARNINGS" ]; then
     echo -e "Session start checks found issues:\n${WARNINGS}" >&2
-    echo "These are non-blocking warnings. Consider fixing them during this session." >&2
+    echo "These are non-blocking warnings. Fix them during this session." >&2
+    echo "Re-run this check after fixing: bash \"\${CLAUDE_PROJECT_DIR:-.}\"/.claude/hooks/session-start.sh" >&2
     exit 0
 fi
 
