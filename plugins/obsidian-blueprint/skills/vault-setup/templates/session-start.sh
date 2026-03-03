@@ -41,34 +41,17 @@ fi
 
 # 3. Orphan note count (notes with no incoming wikilinks)
 if [ "$TOTAL_NOTES" -gt 0 ]; then
-    ORPHANS=$(python3 -c "
-import os, re
-from collections import defaultdict
-
-# Build link targets
-incoming = defaultdict(int)
-wikilink_re = re.compile(r'\[\[([^\]|#]+?)(?:#[^\]]*)?(?:\|[^\]]+)?\]\]')
-all_notes = set()
-
-for root, dirs, files in os.walk('${VAULT_ROOT}'):
-    dirs[:] = [d for d in dirs if not d.startswith('.')]
-    for f in files:
-        if not f.endswith('.md'):
-            continue
-        name = os.path.splitext(f)[0]
-        all_notes.add(name)
-        path = os.path.join(root, f)
-        with open(path, 'r', encoding='utf-8', errors='replace') as fh:
-            content = fh.read()
-        for m in wikilink_re.finditer(content):
-            target = m.group(1).strip().split('/')[-1]
-            incoming[target] += 1
-
-orphans = [n for n in all_notes if incoming.get(n, 0) == 0]
-print(len(orphans))
-" 2>/dev/null)
-    if [ -n "$ORPHANS" ] && [ "$ORPHANS" -gt 0 ]; then
-        REPORT="${REPORT}ORPHAN NOTES: ${ORPHANS} notes have no incoming links\n\n"
+    # Build a list of all link targets, then count notes with no incoming links
+    ALL_NOTES=$(find "${VAULT_ROOT}" -name '*.md' -not -path '*/.obsidian/*' -not -path '*/.git/*' -not -path '*/.trash/*' -exec basename {} .md \; | sort -u)
+    LINK_TARGETS=$(grep -roh '\[\[[^]|#]*' "${VAULT_ROOT}" --include='*.md' 2>/dev/null | sed 's/\[\[//' | sed 's|.*/||' | sort -u)
+    ORPHAN_COUNT=0
+    while IFS= read -r note; do
+        if ! echo "$LINK_TARGETS" | grep -qxF "$note"; then
+            ORPHAN_COUNT=$((ORPHAN_COUNT + 1))
+        fi
+    done <<< "$ALL_NOTES"
+    if [ "$ORPHAN_COUNT" -gt 0 ]; then
+        REPORT="${REPORT}ORPHAN NOTES: ${ORPHAN_COUNT} notes have no incoming links\n\n"
     fi
 fi
 
@@ -87,8 +70,15 @@ if git rev-parse --is-inside-work-tree &>/dev/null; then
     REPORT="${REPORT}${GIT_STATUS}\n"
 fi
 
+# 5. Check yq availability (required for frontmatter validation hooks)
+if ! command -v yq &>/dev/null; then
+    REPORT="${REPORT}\nWARNING: yq is not installed. Frontmatter validation hooks require yq.\n"
+    REPORT="${REPORT}Install: brew install yq (macOS) or https://github.com/mikefarah/yq/releases\n"
+fi
+
 if [ -n "$REPORT" ]; then
     echo -e "Obsidian Vault Health Report:\n${REPORT}" >&2
+    echo "Re-run this check with: bash \"\${CLAUDE_PROJECT_DIR:-.}\"/.claude/hooks/session-start.sh" >&2
 fi
 
 # Always non-blocking

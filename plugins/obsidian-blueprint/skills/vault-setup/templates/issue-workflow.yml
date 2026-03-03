@@ -31,78 +31,79 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python (for frontmatter/link checks)
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+      - name: Install yq
+        run: |
+          wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          chmod +x /usr/local/bin/yq
 
       - name: Install spell checker
         run: pip install codespell
 
       - name: Check frontmatter
         run: |
-          python3 -c "
-          import os, re, sys
-          required = [f.strip() for f in '${REQUIRED_FIELDS}'.split(',')]
-          errors = []
-          date_re = re.compile(r'^\d{4}-\d{2}-\d{2}$')
-          for root, dirs, files in os.walk('${VAULT_ROOT}'):
-              dirs[:] = [d for d in dirs if not d.startswith('.')]
-              for f in files:
-                  if not f.endswith('.md'): continue
-                  path = os.path.join(root, f)
-                  with open(path, 'r', errors='replace') as fh:
-                      content = fh.read()
-                  if not content.startswith('---'):
-                      errors.append(f'{path}: missing frontmatter')
-                      continue
-                  end = content.find('---', 3)
-                  if end == -1:
-                      errors.append(f'{path}: unclosed frontmatter')
-                      continue
-                  fm = content[3:end]
-                  fields = {}
-                  for line in fm.split('\n'):
-                      if ':' in line:
-                          k, v = line.split(':', 1)
-                          fields[k.strip()] = v.strip()
-                  for req in required:
-                      if req and req not in fields:
-                          errors.append(f'{path}: missing \"{req}\"')
-          if errors:
-              print('\n'.join(errors))
-              sys.exit(1)
-          print(f'All notes have valid frontmatter')
-          "
+          ERRORS=""
+          IFS="," read -ra REQUIRED <<< "${REQUIRED_FIELDS}"
+          while IFS= read -r -d '' file; do
+            FIRST_LINE=$(head -1 "$file")
+            if [[ "$FIRST_LINE" != "---" ]]; then
+              ERRORS="${ERRORS}${file}: missing frontmatter\n"
+              continue
+            fi
+            CLOSING=$(sed -n '2,$ { /^---$/= }' "$file" | head -1)
+            if [[ -z "$CLOSING" ]]; then
+              ERRORS="${ERRORS}${file}: unclosed frontmatter\n"
+              continue
+            fi
+            FM=$(sed -n "2,$((CLOSING - 1))p" "$file")
+            if ! echo "$FM" | yq '.' > /dev/null 2>&1; then
+              ERRORS="${ERRORS}${file}: invalid YAML in frontmatter\n"
+              continue
+            fi
+            for req in "${REQUIRED[@]}"; do
+              req=$(echo "$req" | xargs)
+              [[ -z "$req" ]] && continue
+              HAS=$(echo "$FM" | yq "has(\"$req\")" 2>/dev/null)
+              if [[ "$HAS" != "true" ]]; then
+                ERRORS="${ERRORS}${file}: missing required field \"${req}\"\n"
+              fi
+            done
+          done < <(find '${VAULT_ROOT}' -name '*.md' -not -path '*/.obsidian/*' -not -path '*/.git/*' -print0)
+          if [[ -n "$ERRORS" ]]; then
+            echo -e "$ERRORS"
+            exit 1
+          fi
+          echo "All notes have valid frontmatter"
 
       - name: Check broken wikilinks
         run: |
-          python3 -c "
-          import os, re, sys
-          notes = set()
-          for root, dirs, files in os.walk('${VAULT_ROOT}'):
-              dirs[:] = [d for d in dirs if not d.startswith('.')]
-              for f in files:
-                  if f.endswith('.md'):
-                      notes.add(os.path.splitext(f)[0])
-          wikilink_re = re.compile(r'\[\[([^\]|#]+?)(?:#[^\]]*)?(?:\|[^\]]+)?\]\]')
-          errors = []
-          for root, dirs, files in os.walk('${VAULT_ROOT}'):
-              dirs[:] = [d for d in dirs if not d.startswith('.')]
-              for f in files:
-                  if not f.endswith('.md'): continue
-                  path = os.path.join(root, f)
-                  with open(path, 'r', errors='replace') as fh:
-                      content = fh.read()
-                  for m in wikilink_re.finditer(content):
-                      target = m.group(1).strip().split('/')[-1]
-                      if not target.startswith('http') and target not in notes:
-                          errors.append(f'{path}: broken link [[{m.group(1).strip()}]]')
-          if errors:
-              print('\n'.join(errors))
-              sys.exit(1)
-          print(f'All wikilinks resolve correctly')
-          "
+          # Build note index
+          declare -A NOTES
+          while IFS= read -r -d '' file; do
+            NAME=$(basename "$file" .md)
+            NOTES["$NAME"]=1
+          done < <(find '${VAULT_ROOT}' -name '*.md' -not -path '*/.obsidian/*' -not -path '*/.git/*' -print0)
+          # Check wikilinks
+          ERRORS=""
+          LINK_TARGETS=$(grep -roh '\[\[[^]|#]*' '${VAULT_ROOT}' --include='*.md' 2>/dev/null | sed 's/\[\[//' | sed 's|.*/||')
+          while IFS= read -r -d '' file; do
+            while IFS= read -r line; do
+              while [[ "$line" =~ \[\[([^\]|#]+) ]]; do
+                TARGET="${BASH_REMATCH[1]}"
+                line="${line#*]]}"
+                [[ "$TARGET" == http* ]] && continue
+                [[ "${TARGET##*/}" == *.* ]] && continue
+                LINK_NAME=$(echo "${TARGET##*/}" | xargs)
+                if [[ -z "${NOTES[$LINK_NAME]+x}" ]]; then
+                  ERRORS="${ERRORS}${file}: broken link [[${TARGET}]]\n"
+                fi
+              done
+            done < "$file"
+          done < <(find '${VAULT_ROOT}' -name '*.md' -not -path '*/.obsidian/*' -not -path '*/.git/*' -print0)
+          if [[ -n "$ERRORS" ]]; then
+            echo -e "$ERRORS"
+            exit 1
+          fi
+          echo "All wikilinks resolve correctly"
 
       - name: Check spelling
         run: codespell --quiet-level=2 --skip=".obsidian,.git,*.json" ${VAULT_ROOT}

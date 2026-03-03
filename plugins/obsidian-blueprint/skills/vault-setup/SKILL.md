@@ -68,7 +68,7 @@ Structured summary: configured dimensions, files created/modified, quality gate 
 
 **Not an Obsidian vault**: Check for `.obsidian/` directory. If missing, this is not an Obsidian vault. Ask the user.
 
-**python3 not available for YAML validation**: Frontmatter validation in per-edit hook requires python3 with PyYAML. Suggest installing PyYAML or switching to a standalone YAML validator found during tool research.
+**yq not available for YAML validation**: Frontmatter validation in per-edit and quality-gate hooks requires `yq` (https://github.com/mikefarah/yq). Install with `brew install yq` (macOS) or download from GitHub releases. Do NOT use Python for YAML parsing — always use `yq`.
 
 **Volatile files already tracked by git**: If `.obsidian/workspace.json` or other volatile files are already tracked, the session-start hook warns about them. Offer to run `git rm --cached` to untrack them.
 

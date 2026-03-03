@@ -201,7 +201,7 @@ Shortcuts: **today**, **tomorrow**, **next-week**, **next-month**, **last-week**
 - Templates use shell variables for customization (`${VAULT_ROOT}`, `${REQUIRED_FIELDS}`, `${DAILY_NOTES_FORMAT}`, etc.)
 - Plugin-level hook (`scripts/per-edit-fix.sh`) validates YAML frontmatter, ISO dates, runs codespell on .md files
 - `.obsidian/` is tracked in git — only volatile files (workspace.json, cache/) are gitignored
-- Python3 used for YAML parsing (universally available, avoids yq version fragmentation)
+- `yq` used for YAML parsing (do NOT use python3+PyYAML — always use `yq`)
 - Recommends [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) as companion plugin
 
 ### Quality Methodology (7 Dimensions)

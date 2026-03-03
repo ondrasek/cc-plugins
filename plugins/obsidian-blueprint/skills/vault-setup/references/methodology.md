@@ -217,7 +217,7 @@ The output ends with an **action directive** that tells Claude to fix the issue 
 **Good** — a quality gate failure for frontmatter validation:
 ```
 QUALITY GATE FAILED [frontmatter]:
-Command: python3 scripts/validate-frontmatter.py --required title,date,tags
+Command: frontmatter validation (yq + bash)
 
 notes/meeting-notes/2024-03-15.md: missing required field 'tags'
 notes/projects/website-redesign.md: date '15 March 2024' is not ISO 8601
@@ -304,7 +304,7 @@ When the setup skill fills each role, it should:
 
 | Dimension | Research topics |
 |-----------|----------------|
-| Frontmatter Integrity | YAML validators (python3+PyYAML, yq, yamllint), frontmatter-specific tools |
+| Frontmatter Integrity | YAML validators (yq, yamllint), frontmatter-specific tools. Use `yq` for YAML parsing — do NOT use python3+PyYAML. |
 | Link Integrity | Obsidian link checkers, markdown link validators, custom wikilink resolvers |
 | Naming Conventions | Filename linters, custom shell scripts, existing naming convention tools |
 | Template Compliance | Template diffing tools, structure validators, custom scripts |

@@ -3,8 +3,8 @@
 # Fail-fast: stops at the first failing check, outputs its full stderr/stdout.
 # Exit 2 feeds stderr to Claude for automatic fixing.
 #
-# THIS IS AN ANNOTATED EXAMPLE. The specific tools below (python3, codespell,
-# cspell, etc.) are current best-in-class choices for Obsidian vault quality.
+# THIS IS AN ANNOTATED EXAMPLE. The specific tools below (yq, codespell,
+# grep, etc.) are current best-in-class choices for Obsidian vault quality.
 # The setup skill should research and substitute the best tools for each ROLE
 # based on the vault's ecosystem. What matters is the PATTERN:
 #   - run_check / run_check_nonempty functions
@@ -91,49 +91,51 @@ run_check_nonempty() {
 
 # [check:frontmatter]
 # Validates YAML frontmatter in all .md files: syntax, required fields, date format
-run_check "frontmatter" python3 -c "
-import os, sys, re
-
-required = [f.strip() for f in '${REQUIRED_FIELDS}'.split(',')]
-errors = []
-date_re = re.compile(r'^\d{4}-\d{2}-\d{2}$')
-
-for root, dirs, files in os.walk('${VAULT_ROOT}'):
-    # Skip hidden dirs and templates
-    dirs[:] = [d for d in dirs if not d.startswith('.')]
-    for f in files:
-        if not f.endswith('.md'):
-            continue
-        path = os.path.join(root, f)
-        with open(path, 'r', encoding='utf-8', errors='replace') as fh:
-            content = fh.read()
-        if not content.startswith('---'):
-            errors.append(f'{path}: missing frontmatter')
-            continue
-        end = content.find('---', 3)
-        if end == -1:
-            errors.append(f'{path}: unclosed frontmatter')
-            continue
-        fm = content[3:end].strip()
-        fields = {}
-        for line in fm.split('\n'):
-            if ':' in line:
-                key = line.split(':', 1)[0].strip()
-                val = line.split(':', 1)[1].strip()
-                fields[key] = val
-        for req in required:
-            if req and req not in fields:
-                errors.append(f'{path}: missing required field \"{req}\"')
-        for date_field in ['date', 'created', 'updated']:
-            if date_field in fields and fields[date_field]:
-                val = fields[date_field].strip('\"').strip(\"'\")
-                if val and not date_re.match(val):
-                    errors.append(f'{path}: field \"{date_field}\" value \"{val}\" is not ISO 8601')
-
-if errors:
-    print('\n'.join(errors))
-    sys.exit(1)
-"
+# Uses yq for YAML parsing (install: brew install yq / https://github.com/mikefarah/yq)
+run_check "frontmatter" bash -c '
+IFS="," read -ra REQUIRED <<< "'"${REQUIRED_FIELDS}"'"
+ERRORS=""
+while IFS= read -r -d "" file; do
+    FIRST_LINE=$(head -1 "$file")
+    if [[ "$FIRST_LINE" != "---" ]]; then
+        ERRORS="${ERRORS}${file}: missing frontmatter\n"
+        continue
+    fi
+    CLOSING=$(sed -n "2,\$ { /^---\$/= }" "$file" | head -1)
+    if [[ -z "$CLOSING" ]]; then
+        ERRORS="${ERRORS}${file}: unclosed frontmatter\n"
+        continue
+    fi
+    FM=$(sed -n "2,$((CLOSING - 1))p" "$file")
+    # Validate YAML syntax with yq
+    if ! echo "$FM" | yq "." > /dev/null 2>&1; then
+        ERRORS="${ERRORS}${file}: invalid YAML in frontmatter\n"
+        continue
+    fi
+    # Check required fields
+    for req in "${REQUIRED[@]}"; do
+        req=$(echo "$req" | xargs)
+        [[ -z "$req" ]] && continue
+        HAS=$(echo "$FM" | yq "has(\"$req\")" 2>/dev/null)
+        if [[ "$HAS" != "true" ]]; then
+            ERRORS="${ERRORS}${file}: missing required field \"${req}\"\n"
+        fi
+    done
+    # Validate date fields
+    for df in date created updated; do
+        VAL=$(echo "$FM" | yq ".$df // \"\"" 2>/dev/null | tr -d "\"")
+        if [[ -n "$VAL" ]] && [[ "$VAL" != "null" ]]; then
+            if [[ ! "$VAL" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+                ERRORS="${ERRORS}${file}: field \"${df}\" value \"${VAL}\" is not ISO 8601\n"
+            fi
+        fi
+    done
+done < <(find "'"${VAULT_ROOT}"'" -name "*.md" -not -path "*/.obsidian/*" -not -path "*/.git/*" -print0)
+if [[ -n "$ERRORS" ]]; then
+    echo -e "$ERRORS"
+    exit 1
+fi
+'
 
 # [check:naming]
 # Checks filenames for problematic special characters and daily note format
@@ -166,190 +168,172 @@ run_check_nonempty "spelling" codespell --quiet-level=2 --skip=".obsidian,.git,*
 
 # [check:headings]
 # Check heading hierarchy — no skipped levels (e.g., # then ### without ##)
-run_check_nonempty "headings" python3 -c "
-import os, re, sys
-
-errors = []
-heading_re = re.compile(r'^(#{1,6})\s')
-
-for root, dirs, files in os.walk('${VAULT_ROOT}'):
-    dirs[:] = [d for d in dirs if not d.startswith('.')]
-    for f in files:
-        if not f.endswith('.md'):
+run_check_nonempty "headings" bash -c '
+ERRORS=""
+while IFS= read -r -d "" file; do
+    PREV_LEVEL=0
+    IN_CODE=false
+    LINE_NUM=0
+    while IFS= read -r line; do
+        LINE_NUM=$((LINE_NUM + 1))
+        # Track code blocks
+        if [[ "$line" == "\`\`\`"* ]]; then
+            if $IN_CODE; then IN_CODE=false; else IN_CODE=true; fi
             continue
-        path = os.path.join(root, f)
-        with open(path, 'r', encoding='utf-8', errors='replace') as fh:
-            lines = fh.readlines()
-        prev_level = 0
-        in_code_block = False
-        for i, line in enumerate(lines, 1):
-            stripped = line.strip()
-            if stripped.startswith('\`\`\`'):
-                in_code_block = not in_code_block
-                continue
-            if in_code_block:
-                continue
-            m = heading_re.match(stripped)
-            if m:
-                level = len(m.group(1))
-                if prev_level > 0 and level > prev_level + 1:
-                    errors.append(f'{path}:{i}: heading jumps from h{prev_level} to h{level}')
-                prev_level = level
-
-if errors:
-    print('\n'.join(errors))
-"
+        fi
+        $IN_CODE && continue
+        # Match headings
+        if [[ "$line" =~ ^(#{1,6})[[:space:]] ]]; then
+            LEVEL=${#BASH_REMATCH[1]}
+            if [[ $PREV_LEVEL -gt 0 ]] && [[ $LEVEL -gt $((PREV_LEVEL + 1)) ]]; then
+                ERRORS="${ERRORS}${file}:${LINE_NUM}: heading jumps from h${PREV_LEVEL} to h${LEVEL}\n"
+            fi
+            PREV_LEVEL=$LEVEL
+        fi
+    done < "$file"
+done < <(find "'"${VAULT_ROOT}"'" -name "*.md" -not -path "*/.obsidian/*" -not -path "*/.git/*" -print0)
+if [[ -n "$ERRORS" ]]; then
+    echo -e "$ERRORS"
+fi
+'
 
 # [check:links]
 # Validate wikilinks resolve to existing files in the vault
-run_check_nonempty "links" python3 -c "
-import os, re, sys
-
+run_check_nonempty "links" bash -c '
 # Build index of all note names (without extension)
-notes = set()
-for root, dirs, files in os.walk('${VAULT_ROOT}'):
-    dirs[:] = [d for d in dirs if not d.startswith('.')]
-    for f in files:
-        if f.endswith('.md'):
-            notes.add(os.path.splitext(f)[0])
+declare -A NOTES
+while IFS= read -r -d "" file; do
+    NAME=$(basename "$file" .md)
+    NOTES["$NAME"]=1
+done < <(find "'"${VAULT_ROOT}"'" -name "*.md" -not -path "*/.obsidian/*" -not -path "*/.git/*" -print0)
 
 # Check wikilinks
-wikilink_re = re.compile(r'\[\[([^\]|#]+?)(?:#[^\]]*)?(?:\|[^\]]+)?\]\]')
-errors = []
-for root, dirs, files in os.walk('${VAULT_ROOT}'):
-    dirs[:] = [d for d in dirs if not d.startswith('.')]
-    for f in files:
-        if not f.endswith('.md'):
+ERRORS=""
+while IFS= read -r -d "" file; do
+    IN_CODE=false
+    LINE_NUM=0
+    while IFS= read -r line; do
+        LINE_NUM=$((LINE_NUM + 1))
+        if [[ "$line" == "\`\`\`"* ]]; then
+            if $IN_CODE; then IN_CODE=false; else IN_CODE=true; fi
             continue
-        path = os.path.join(root, f)
-        with open(path, 'r', encoding='utf-8', errors='replace') as fh:
-            content = fh.read()
-        in_code_block = False
-        for i, line in enumerate(content.split('\n'), 1):
-            stripped = line.strip()
-            if stripped.startswith('\`\`\`'):
-                in_code_block = not in_code_block
-                continue
-            if in_code_block:
-                continue
-            for m in wikilink_re.finditer(line):
-                target = m.group(1).strip()
-                # Skip external links and embedded images
-                if target.startswith('http') or '.' in target.split('/')[-1]:
-                    continue
-                # Handle folder-prefixed links (folder/note)
-                link_name = target.split('/')[-1] if '/' in target else target
-                if link_name not in notes:
-                    errors.append(f'{path}:{i}: broken wikilink [[{target}]]')
-
-if errors:
-    print('\n'.join(errors[:50]))  # Cap at 50 to avoid overwhelming output
-"
+        fi
+        $IN_CODE && continue
+        # Extract wikilinks: [[target]] or [[target|alias]] or [[target#heading]]
+        while [[ "$line" =~ \[\[([^\]|#]+) ]]; do
+            TARGET="${BASH_REMATCH[1]}"
+            # Remove the matched portion to find next link
+            line="${line#*]]}"
+            # Skip external links and file embeds with extensions
+            [[ "$TARGET" == http* ]] && continue
+            [[ "${TARGET##*/}" == *.* ]] && continue
+            # Handle folder-prefixed links
+            LINK_NAME="${TARGET##*/}"
+            LINK_NAME=$(echo "$LINK_NAME" | xargs)
+            if [[ -z "${NOTES[$LINK_NAME]+x}" ]]; then
+                ERRORS="${ERRORS}${file}:${LINE_NUM}: broken wikilink [[${TARGET}]]\n"
+            fi
+        done
+    done < "$file"
+done < <(find "'"${VAULT_ROOT}"'" -name "*.md" -not -path "*/.obsidian/*" -not -path "*/.git/*" -print0)
+if [[ -n "$ERRORS" ]]; then
+    echo -e "$ERRORS" | head -50
+fi
+'
 
 # [check:tags]
 # Check for orphan tags and case inconsistencies
-run_check_nonempty "tags" python3 -c "
-import os, re, sys
-from collections import defaultdict
+run_check_nonempty "tags" bash -c '
+declare -A TAG_COUNTS    # lowercase tag -> count
+declare -A TAG_VARIANTS  # lowercase tag -> space-separated variants
+declare -A TAG_FILES     # lowercase tag -> first file seen
 
-tag_re = re.compile(r'(?:^|\s)#([a-zA-Z][a-zA-Z0-9_/-]*)\b')
-tag_usage = defaultdict(list)  # lowercase -> [(original, file)]
-
-for root, dirs, files in os.walk('${VAULT_ROOT}'):
-    dirs[:] = [d for d in dirs if not d.startswith('.')]
-    for f in files:
-        if not f.endswith('.md'):
+while IFS= read -r -d "" file; do
+    IN_CODE=false
+    while IFS= read -r line; do
+        if [[ "$line" == "\`\`\`"* ]]; then
+            if $IN_CODE; then IN_CODE=false; else IN_CODE=true; fi
             continue
-        path = os.path.join(root, f)
-        with open(path, 'r', encoding='utf-8', errors='replace') as fh:
-            content = fh.read()
-        in_code_block = False
-        for line in content.split('\n'):
-            stripped = line.strip()
-            if stripped.startswith('\`\`\`'):
-                in_code_block = not in_code_block
-                continue
-            if in_code_block:
-                continue
-            for m in tag_re.finditer(line):
-                tag = m.group(1)
-                tag_usage[tag.lower()].append((tag, path))
+        fi
+        $IN_CODE && continue
+        # Match inline tags: #word (not inside links)
+        while [[ "$line" =~ (^|[[:space:]])#([a-zA-Z][a-zA-Z0-9_/-]*) ]]; do
+            TAG="${BASH_REMATCH[2]}"
+            LOWER=$(echo "$TAG" | tr "[:upper:]" "[:lower:]")
+            TAG_COUNTS["$LOWER"]=$(( ${TAG_COUNTS["$LOWER"]:-0} + 1 ))
+            if [[ "${TAG_VARIANTS[$LOWER]}" != *"$TAG"* ]]; then
+                TAG_VARIANTS["$LOWER"]="${TAG_VARIANTS[$LOWER]:+${TAG_VARIANTS[$LOWER]} }$TAG"
+            fi
+            TAG_FILES["$LOWER"]="${TAG_FILES[$LOWER]:-$file}"
+            line="${line#*"#${TAG}"}"
+        done
+    done < "$file"
+done < <(find "'"${VAULT_ROOT}"'" -name "*.md" -not -path "*/.obsidian/*" -not -path "*/.git/*" -print0)
 
-errors = []
-# Find case inconsistencies
-seen_lower = defaultdict(set)
-for lower_tag, usages in tag_usage.items():
-    variants = set(t for t, _ in usages)
-    if len(variants) > 1:
-        files = set(f for _, f in usages)
-        errors.append(f'tag case inconsistency: {variants} used in {len(files)} files')
-    seen_lower[lower_tag] = variants
-
-# Find tags used only once (potential orphans)
-for lower_tag, usages in tag_usage.items():
-    if len(usages) == 1:
-        tag, path = usages[0]
-        errors.append(f'{path}: orphan tag #{tag} (used only once)')
-
-if errors:
-    print('\n'.join(errors[:50]))
-"
+ERRORS=""
+for LOWER in "${!TAG_VARIANTS[@]}"; do
+    VARIANTS="${TAG_VARIANTS[$LOWER]}"
+    # Check case inconsistencies (multiple variants)
+    WORD_COUNT=$(echo "$VARIANTS" | wc -w | tr -d " ")
+    if [[ "$WORD_COUNT" -gt 1 ]]; then
+        ERRORS="${ERRORS}tag case inconsistency: ${VARIANTS}\n"
+    fi
+    # Check orphan tags (used only once)
+    if [[ "${TAG_COUNTS[$LOWER]}" -eq 1 ]]; then
+        ERRORS="${ERRORS}${TAG_FILES[$LOWER]}: orphan tag #${VARIANTS} (used only once)\n"
+    fi
+done
+if [[ -n "$ERRORS" ]]; then
+    echo -e "$ERRORS" | head -50
+fi
+'
 
 # [check:templates]
 # Verify notes created from templates contain required template sections
-run_check "templates" python3 -c "
-import os, re, sys
-
-template_dir = '${TEMPLATES_FOLDER}'
-if not os.path.isdir(template_dir):
-    sys.exit(0)  # No templates directory — skip check
+# Uses yq for frontmatter parsing, grep for heading comparison
+run_check "templates" bash -c '
+TEMPLATE_DIR="'"${TEMPLATES_FOLDER}"'"
+if [[ ! -d "$TEMPLATE_DIR" ]]; then
+    exit 0  # No templates directory — skip check
+fi
 
 # Parse template headings
-templates = {}
-for f in os.listdir(template_dir):
-    if not f.endswith('.md'):
-        continue
-    path = os.path.join(template_dir, f)
-    with open(path, 'r', encoding='utf-8', errors='replace') as fh:
-        content = fh.read()
-    headings = re.findall(r'^(#{1,6}\s+.+)$', content, re.MULTILINE)
-    if headings:
-        templates[os.path.splitext(f)[0]] = headings
+declare -A TEMPLATE_HEADINGS
+for tmpl in "$TEMPLATE_DIR"/*.md; do
+    [[ -f "$tmpl" ]] || continue
+    NAME=$(basename "$tmpl" .md)
+    HEADINGS=$(grep -E "^#{1,6} " "$tmpl" | tr "\n" "|")
+    [[ -n "$HEADINGS" ]] && TEMPLATE_HEADINGS["$NAME"]="$HEADINGS"
+done
 
-if not templates:
-    sys.exit(0)
+[[ ${#TEMPLATE_HEADINGS[@]} -eq 0 ]] && exit 0
 
-# Check notes that declare a template in frontmatter
-errors = []
-for root, dirs, files in os.walk('${VAULT_ROOT}'):
-    dirs[:] = [d for d in dirs if not d.startswith('.') and d != template_dir]
-    for f in files:
-        if not f.endswith('.md'):
-            continue
-        path = os.path.join(root, f)
-        with open(path, 'r', encoding='utf-8', errors='replace') as fh:
-            content = fh.read()
-        if not content.startswith('---'):
-            continue
-        end = content.find('---', 3)
-        if end == -1:
-            continue
-        fm = content[3:end]
-        # Look for template field
-        for line in fm.split('\n'):
-            if line.strip().startswith('template:'):
-                tmpl_name = line.split(':', 1)[1].strip().strip('\"').strip(\"'\")
-                if tmpl_name in templates:
-                    note_headings = re.findall(r'^(#{1,6}\s+.+)$', content[end+3:], re.MULTILINE)
-                    for req_heading in templates[tmpl_name]:
-                        if req_heading not in note_headings:
-                            errors.append(f'{path}: missing template section \"{req_heading}\" (template: {tmpl_name})')
-                break
-
-if errors:
-    print('\n'.join(errors))
-    sys.exit(1)
-"
+ERRORS=""
+while IFS= read -r -d "" file; do
+    FIRST_LINE=$(head -1 "$file")
+    [[ "$FIRST_LINE" != "---" ]] && continue
+    CLOSING=$(sed -n "2,\$ { /^---\$/= }" "$file" | head -1)
+    [[ -z "$CLOSING" ]] && continue
+    FM=$(sed -n "2,$((CLOSING - 1))p" "$file")
+    # Get template name from frontmatter using yq
+    TMPL_NAME=$(echo "$FM" | yq ".template // \"\"" 2>/dev/null | tr -d "\"")
+    [[ -z "$TMPL_NAME" ]] || [[ "$TMPL_NAME" == "null" ]] && continue
+    [[ -z "${TEMPLATE_HEADINGS[$TMPL_NAME]+x}" ]] && continue
+    # Compare headings
+    IFS="|" read -ra REQ_HEADINGS <<< "${TEMPLATE_HEADINGS[$TMPL_NAME]}"
+    BODY=$(tail -n +"$((CLOSING + 1))" "$file")
+    for heading in "${REQ_HEADINGS[@]}"; do
+        [[ -z "$heading" ]] && continue
+        if ! echo "$BODY" | grep -qF "$heading"; then
+            ERRORS="${ERRORS}${file}: missing template section \"${heading}\" (template: ${TMPL_NAME})\n"
+        fi
+    done
+done < <(find "'"${VAULT_ROOT}"'" -name "*.md" -not -path "*/.obsidian/*" -not -path "*/.git/*" -not -path "'"${TEMPLATES_FOLDER}"'/*" -print0)
+if [[ -n "$ERRORS" ]]; then
+    echo -e "$ERRORS"
+    exit 1
+fi
+'
 
 # [check:git-hygiene]
 # Verify volatile .obsidian/ files are gitignored

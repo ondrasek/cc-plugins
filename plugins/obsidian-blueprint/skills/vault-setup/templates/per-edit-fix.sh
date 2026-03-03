@@ -2,15 +2,16 @@
 # Per-edit hook: runs fast auto-fixers on changed markdown files
 # Triggered by PostToolUse on Edit|Write
 # Exit 0 = success (fixes applied silently)
-# Exit 2 = unfixable issues fed back to Claude
+# Exit 2 = unfixable issues fed back to Claude (fail-fast: one error at a time)
 #
-# THIS IS AN ANNOTATED EXAMPLE. The specific tools (python3, codespell) are
+# THIS IS AN ANNOTATED EXAMPLE. The specific tools (yq, codespell) are
 # current choices for the Frontmatter & Spelling roles. The setup skill should
 # substitute the best auto-fixable tools for the vault's ecosystem. What
 # matters is the PATTERN:
 #   - Detect markdown file from tool input JSON
 #   - Run auto-fixers silently (exit 0 if all fixed)
-#   - Report unfixable issues to stderr (exit 2)
+#   - FAIL-FAST: stop at the first unfixable error, report only that one
+#   - Structured output: check name, command, tool output, hint, action directive
 #
 # TEMPLATE VARIABLES:
 #   ${REQUIRED_FIELDS}  — comma-separated required frontmatter fields
@@ -33,73 +34,83 @@ if [[ "$FILE_PATH" == */.obsidian/* ]]; then
     exit 0
 fi
 
-ERRORS=""
+fail() {
+    local name="$1" cmd="$2" output="$3" hint="$4"
+    echo "" >&2
+    echo "PER-EDIT CHECK FAILED [$name] in ${FILE_PATH}:" >&2
+    echo "Command: $cmd" >&2
+    echo "" >&2
+    echo "$output" >&2
+    echo "" >&2
+    if [ -n "$hint" ]; then
+        echo "Hint: $hint" >&2
+        echo "" >&2
+    fi
+    echo "ACTION REQUIRED: You MUST fix the issue shown above. Do NOT stop or explain — read the file at the reported line, edit the source code to resolve it, and the check will re-run on next edit." >&2
+    exit 2
+}
 
-# 1. YAML frontmatter validity and required fields
-FM_OUTPUT=$(python3 -c "
-import re, sys
+# 1. YAML frontmatter validity and required fields (using yq)
+FIRST_LINE=$(head -1 "$FILE_PATH")
+if [[ "$FIRST_LINE" == "---" ]]; then
+    CLOSING=$(sed -n '2,$ { /^---$/= }' "$FILE_PATH" | head -1)
+    if [[ -z "$CLOSING" ]]; then
+        fail "frontmatter" "frontmatter delimiter check" \
+            "${FILE_PATH}: unclosed frontmatter (missing closing ---)" \
+            "Add a closing '---' line after the frontmatter YAML block."
+    fi
 
-path = sys.argv[1]
-required = [f.strip() for f in '${REQUIRED_FIELDS}'.split(',')]
-date_re = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+    FRONTMATTER=$(sed -n "2,$((CLOSING - 1))p" "$FILE_PATH")
+    if [[ -n "$FRONTMATTER" ]]; then
+        # Validate YAML syntax
+        YAML_CHECK=$(echo "$FRONTMATTER" | yq '.' 2>&1 >/dev/null)
+        if [[ $? -ne 0 ]]; then
+            fail "frontmatter" "yq '.' (YAML validation)" "$YAML_CHECK" \
+                "The YAML frontmatter has syntax errors. Read the file and fix the YAML between the --- delimiters."
+        fi
 
-with open(path, 'r', encoding='utf-8', errors='replace') as fh:
-    content = fh.read()
+        # Check required fields
+        IFS=',' read -ra FIELDS <<< "${REQUIRED_FIELDS}"
+        for field in "${FIELDS[@]}"; do
+            field=$(echo "$field" | xargs)
+            [[ -z "$field" ]] && continue
+            HAS_FIELD=$(echo "$FRONTMATTER" | yq "has(\"$field\")" 2>/dev/null)
+            if [[ "$HAS_FIELD" != "true" ]]; then
+                fail "frontmatter" "yq 'has(\"$field\")'" \
+                    "${FILE_PATH}: missing required field \"$field\"" \
+                    "Read the file and add the '$field' field to the YAML frontmatter block."
+            fi
+        done
 
-if not content.startswith('---'):
-    print(f'{path}: missing YAML frontmatter (file must start with ---)')
-    sys.exit(1)
-
-end = content.find('---', 3)
-if end == -1:
-    print(f'{path}: unclosed frontmatter (missing closing ---)')
-    sys.exit(1)
-
-fm = content[3:end].strip()
-errors = []
-fields = {}
-for line in fm.split('\n'):
-    if ':' in line:
-        key = line.split(':', 1)[0].strip()
-        val = line.split(':', 1)[1].strip()
-        fields[key] = val
-
-for req in required:
-    if req and req not in fields:
-        errors.append(f'{path}: missing required field \"{req}\"')
-
-# Validate ISO 8601 date format in date fields
-for date_field in ['date', 'created', 'updated']:
-    if date_field in fields and fields[date_field]:
-        val = fields[date_field].strip('\"').strip(\"'\")
-        if val and not date_re.match(val):
-            errors.append(f'{path}: field \"{date_field}\" value \"{val}\" is not ISO 8601 (expected YYYY-MM-DD)')
-
-if errors:
-    print('\n'.join(errors))
-    sys.exit(1)
-" "$FILE_PATH" 2>&1)
-FM_EXIT=$?
-if [ $FM_EXIT -ne 0 ]; then
-    ERRORS="${ERRORS}FRONTMATTER:\n${FM_OUTPUT}\n\n"
+        # Validate ISO 8601 date format in date fields
+        for DATE_FIELD in date created updated; do
+            VALUE=$(echo "$FRONTMATTER" | yq ".${DATE_FIELD} // \"\"" 2>/dev/null | tr -d '"')
+            if [[ -n "$VALUE" ]] && [[ "$VALUE" != "null" ]]; then
+                if [[ ! "$VALUE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+                    fail "frontmatter" "date format check" \
+                        "${FILE_PATH}: field \"$DATE_FIELD\" value \"$VALUE\" is not ISO 8601 (expected YYYY-MM-DD)" \
+                        "Read the file and change the $DATE_FIELD field to ISO 8601 format (YYYY-MM-DD)."
+                fi
+            fi
+        done
+    fi
+else
+    fail "frontmatter" "frontmatter presence check" \
+        "${FILE_PATH}: missing YAML frontmatter (file must start with ---)" \
+        "Add YAML frontmatter to the top of the file: start with '---', add required fields (${REQUIRED_FIELDS}), end with '---'."
 fi
 
-# 2. Codespell with auto-fix (if available)
+# 2. Codespell with auto-fix (if available) — fail-fast on unfixable
 if command -v codespell &>/dev/null; then
     SPELL_OUTPUT=$(codespell --quiet-level=2 "$FILE_PATH" 2>&1)
     if [ -n "$SPELL_OUTPUT" ]; then
         codespell --write-changes --quiet-level=2 "$FILE_PATH" 2>/dev/null
         REMAINING=$(codespell --quiet-level=2 "$FILE_PATH" 2>&1)
         if [ -n "$REMAINING" ]; then
-            ERRORS="${ERRORS}SPELLING (codespell):\n${REMAINING}\n\n"
+            fail "codespell" "codespell --quiet-level=2 $FILE_PATH" "$REMAINING" \
+                "Codespell found misspellings it could not auto-fix. Read the file at the reported line and correct the spelling manually."
         fi
     fi
-fi
-
-# Report unfixable issues back to Claude
-if [ -n "$ERRORS" ]; then
-    echo -e "Per-edit check found issues in ${FILE_PATH}:\n${ERRORS}" >&2
-    exit 2
 fi
 
 exit 0

@@ -2,7 +2,7 @@
 # Plugin-level per-edit hook: validates frontmatter and spelling in Obsidian vault notes
 # Triggered by PostToolUse on Edit|Write
 # Exit 0 = success (fixes applied silently)
-# Exit 2 = unfixable issues fed back to Claude
+# Exit 2 = unfixable issues fed back to Claude (fail-fast: one error at a time)
 
 INPUT=$(cat)
 FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.filePath // empty')
@@ -18,7 +18,21 @@ if [[ ! -f "$FILE_PATH" ]]; then
     exit 0
 fi
 
-ERRORS=""
+fail() {
+    local name="$1" cmd="$2" output="$3" hint="$4"
+    echo "" >&2
+    echo "PER-EDIT CHECK FAILED [$name] in ${FILE_PATH}:" >&2
+    echo "Command: $cmd" >&2
+    echo "" >&2
+    echo "$output" >&2
+    echo "" >&2
+    if [ -n "$hint" ]; then
+        echo "Hint: $hint" >&2
+        echo "" >&2
+    fi
+    echo "ACTION REQUIRED: You MUST fix the issue shown above. Do NOT stop or explain — read the file at the reported line, edit the source code to resolve it, and the check will re-run on next edit." >&2
+    exit 2
+}
 
 # --- Frontmatter YAML validation ---
 # Check if file starts with --- (frontmatter delimiter)
@@ -27,39 +41,39 @@ if [[ "$FIRST_LINE" == "---" ]]; then
     # Check for closing delimiter
     CLOSING=$(sed -n '2,$ { /^---$/= }' "$FILE_PATH" | head -1)
     if [[ -z "$CLOSING" ]]; then
-        ERRORS="${ERRORS}FRONTMATTER: Missing closing '---' delimiter. The file starts with frontmatter but has no closing delimiter.\n\n"
-    else
-        # Extract frontmatter content (between first and second ---)
-        FRONTMATTER=$(sed -n "2,$((CLOSING - 1))p" "$FILE_PATH")
-        if [[ -n "$FRONTMATTER" ]]; then
-            YAML_CHECK=$(echo "$FRONTMATTER" | python3 -c "import sys, yaml; yaml.safe_load(sys.stdin)" 2>&1)
-            YAML_EXIT=$?
-            if [[ $YAML_EXIT -ne 0 ]]; then
-                ERRORS="${ERRORS}FRONTMATTER (YAML):\n${YAML_CHECK}\n\n"
-            else
-                # Validate date fields are ISO format (YYYY-MM-DD)
-                DATE_ISSUES=""
-                while IFS= read -r line; do
-                    # Match common date field names
-                    if [[ "$line" =~ ^(date|created|modified|updated|published|due|scheduled)[[:space:]]*: ]]; then
-                        FIELD_NAME="${BASH_REMATCH[1]}"
-                        # Extract the value after the colon
-                        VALUE=$(echo "$line" | sed 's/^[^:]*:[[:space:]]*//' | tr -d '"' | tr -d "'" | xargs)
-                        # Skip empty values
-                        if [[ -z "$VALUE" ]]; then
-                            continue
-                        fi
-                        # Check if it matches YYYY-MM-DD (possibly with time after)
-                        if [[ ! "$VALUE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}($|[T ]) ]]; then
-                            DATE_ISSUES="${DATE_ISSUES}  ${FIELD_NAME}: '${VALUE}' is not ISO 8601 format (expected YYYY-MM-DD)\n"
-                        fi
-                    fi
-                done <<< "$FRONTMATTER"
-                if [[ -n "$DATE_ISSUES" ]]; then
-                    ERRORS="${ERRORS}FRONTMATTER (dates):\n${DATE_ISSUES}\n"
+        fail "frontmatter" "frontmatter delimiter check" \
+            "${FILE_PATH}: missing closing '---' delimiter. The file starts with frontmatter but has no closing delimiter." \
+            "Add a closing '---' line after the frontmatter YAML block."
+    fi
+
+    # Extract frontmatter content (between first and second ---)
+    FRONTMATTER=$(sed -n "2,$((CLOSING - 1))p" "$FILE_PATH")
+    if [[ -n "$FRONTMATTER" ]]; then
+        # Validate YAML syntax with yq
+        if ! command -v yq &>/dev/null; then
+            fail "frontmatter" "yq (YAML validation)" \
+                "yq is not installed. Cannot validate YAML frontmatter." \
+                "Install yq (https://github.com/mikefarah/yq): brew install yq (macOS) or download from GitHub releases."
+        fi
+
+        YAML_CHECK=$(echo "$FRONTMATTER" | yq '.' 2>&1 >/dev/null)
+        YAML_EXIT=$?
+        if [[ $YAML_EXIT -ne 0 ]]; then
+            fail "frontmatter" "yq '.' (YAML validation)" "$YAML_CHECK" \
+                "The YAML frontmatter has syntax errors. Read the file and fix the YAML between the --- delimiters."
+        fi
+
+        # Validate date fields are ISO format (YYYY-MM-DD)
+        for DATE_FIELD in date created modified updated published due scheduled; do
+            VALUE=$(echo "$FRONTMATTER" | yq ".${DATE_FIELD} // \"\"" 2>/dev/null | tr -d '"')
+            if [[ -n "$VALUE" ]] && [[ "$VALUE" != "null" ]]; then
+                if [[ ! "$VALUE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}($|[T ]) ]]; then
+                    fail "frontmatter" "date format check" \
+                        "${FILE_PATH}: field \"${DATE_FIELD}\" value \"${VALUE}\" is not ISO 8601 format (expected YYYY-MM-DD)" \
+                        "Read the file and change the ${DATE_FIELD} field to ISO 8601 format (YYYY-MM-DD)."
                 fi
             fi
-        fi
+        done
     fi
 fi
 
@@ -70,15 +84,10 @@ if command -v codespell &>/dev/null; then
         codespell --write-changes --quiet-level=2 "$FILE_PATH" 2>/dev/null
         REMAINING=$(codespell --quiet-level=2 "$FILE_PATH" 2>&1)
         if [[ -n "$REMAINING" ]]; then
-            ERRORS="${ERRORS}SPELLING (codespell):\n${REMAINING}\n\n"
+            fail "codespell" "codespell --quiet-level=2 $FILE_PATH" "$REMAINING" \
+                "Codespell found misspellings it could not auto-fix. Read the file at the reported line and correct the spelling manually."
         fi
     fi
-fi
-
-# Report unfixable issues back to Claude
-if [[ -n "$ERRORS" ]]; then
-    echo -e "Per-edit check found issues in ${FILE_PATH}:\n${ERRORS}" >&2
-    exit 2
 fi
 
 exit 0
