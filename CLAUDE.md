@@ -12,7 +12,7 @@ plugins/
   blueprint/                     — Multi-language quality methodology plugin
     .claude-plugin/plugin.json   — Plugin manifest
     skills/shared/references/    — Shared methodology framework and workflows
-    skills/{lang}-{skill}/       — 16 skills (python/dotnet/rust/nvim-lua × setup/audit/update/explain)
+    skills/{lang}-{skill}/       — 20 skills (python/dotnet/rust/go/nvim-lua × setup/audit/update/explain)
     hooks/hooks.json             — Plugin-level hook registrations
     scripts/per-edit-fix.sh      — Multi-language per-edit auto-fix (routes by extension)
   github-issues/                 — GitHub issue management utility plugin
@@ -120,6 +120,7 @@ claude --plugin-dir /path/to/cc-plugins/plugins/blueprint
 - **Python**: pyproject.toml config, ruff/pyright/bandit ecosystem, pre-commit hooks, deptry for deps
 - **.NET**: Directory.Build.props + .editorconfig centralization, Roslyn analyzers preferred, dotnet format
 - **Rust**: Cargo.toml `[lints]` + clippy.toml/rustfmt.toml/deny.toml, WASM target detection
+- **Go**: `.golangci.yml` (v2) covers 6 dimensions, govulncheck for security, gofumpt/goimports formatting, go-test-coverage for thresholds
 - **Neovim Lua**: selene (std="vim") + stylua, LuaJIT/Lua 5.1 only, plenary/mini.test/busted detection
 
 ## github-issues Plugin
