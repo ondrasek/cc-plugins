@@ -84,7 +84,7 @@ run_check_nonempty() {
 
 # Checks ordered by speed and likelihood of failure.
 # [check:go-test]
-run_check        "go-test"        go test -race -count=1 -failfast -shuffle=on ./...
+run_check        "go-test"        go test -race -coverprofile=coverage.out -covermode=atomic -count=1 -failfast -shuffle=on ./...
 # [check:coverage]
 run_check        "coverage"       go-test-coverage --config=.testcoverage.yml
 # [check:golangci-lint]
@@ -96,6 +96,8 @@ run_check        "govulncheck"    govulncheck ./...
 # [check:go-mod-verify]
 run_check        "go-mod-verify"  go mod verify
 # [check:go-mod-tidy]
+# Requires Go 1.21+. For older versions, remove this check or replace with
+# 'go mod tidy && git diff --exit-code go.mod go.sum'.
 run_check_nonempty "go-mod-tidy"  go mod tidy -diff
 # [check:deadcode]
 # run_check_nonempty "deadcode"   deadcode -filter=${MODULE_PATH} -test ./...
