@@ -42,11 +42,16 @@ This checklist defines what the setup skill must analyze in a target codebase be
 - [ ] WASM target (`GOOS=js GOARCH=wasm` or `wasip1`)
 - [ ] `embed` directive usage (`//go:embed`)
 
+**Also check host environment**:
+- [ ] `gcc` / `cc` available (`command -v gcc`) — needed for `-race` flag even in pure-Go projects
+- [ ] If no C compiler: plan to remove `-race` from quality-gate and CI, or warn user to install gcc
+
 **Impact**:
 - Build tags: add to `run.build-tags` in `.golangci.yml`
 - CGo: may need `CGO_ENABLED=1` for lint/test, complicates CI
 - WASM: separate test/build job
 - Pure Go (`CGO_ENABLED=0`): simpler CI, avoid C toolchain
+- No gcc: remove `-race` from test commands or install C compiler
 
 ---
 

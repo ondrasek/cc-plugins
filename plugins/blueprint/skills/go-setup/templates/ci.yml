@@ -8,12 +8,16 @@
 #   - Note: lint job covers 6 dimensions via golangci-lint
 #   - Each job: checkout → setup Go → install tools → run checks
 #   - [check:*] markers for tool-specific steps
-#   - Coverage upload on PRs
 #
 # TEMPLATE VARIABLES:
-#   ${GO_VERSION}              — Go version (e.g., "1.24")
-#   ${COVERAGE_THRESHOLD}      — minimum coverage percentage (e.g., 80)
+#   ${GO_VERSION}              — Go version (e.g., "1.26")
 #   ${GOLANGCI_LINT_VERSION}   — golangci-lint version (e.g., "v2.11.3")
+#
+# TOOL DIRECTIVES (Go 1.24+):
+#   When the project uses go.mod tool directives, replace 'go install ...@latest'
+#   with 'go tool <name>' invocations. The setup skill should detect tool
+#   directives and substitute accordingly. The template below uses go install
+#   as the default; comments show the go tool alternative.
 
 name: CI
 
@@ -30,34 +34,33 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: "${GO_VERSION}"
       - name: Install test tools
+        # When using go.mod tool directives (Go 1.24+), remove this step
+        # entirely — tools are resolved automatically via 'go tool'.
         run: |
           go install gotest.tools/gotestsum@latest
           go install github.com/vladopajic/go-test-coverage/v2@latest
       - name: Run tests with coverage
+        # With tool directives, use: go tool gotestsum ...
         run: |
           gotestsum --format standard-verbose --junitfile report.xml -- \
-            -race -coverprofile=coverage.out -covermode=atomic -count=1 -shuffle=on ./...
+            -race -coverpkg=./... -coverprofile=coverage.out -covermode=atomic -count=1 -shuffle=on ./...
       - name: Check coverage threshold
+        # With tool directives, use: go tool go-test-coverage ...
         run: go-test-coverage --config=.testcoverage.yml
-      - name: Upload coverage
-        uses: codecov/codecov-action@v5
-        with:
-          files: coverage.out
-        if: github.event_name == 'pull_request'
 
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: "${GO_VERSION}"
-      - uses: golangci/golangci-lint-action@v7
+      - uses: golangci/golangci-lint-action@v8
         with:
           version: "${GOLANGCI_LINT_VERSION}"
       - name: Check formatting
@@ -71,11 +74,12 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: "${GO_VERSION}"
       - name: Install govulncheck
+        # With tool directives, use: go tool govulncheck ...
         run: go install golang.org/x/vuln/cmd/govulncheck@latest
       - name: Run vulnerability check
         run: govulncheck ./...
@@ -83,10 +87,12 @@ jobs:
         run: go mod verify
 
   # Dimension 9: Version Discipline
+  # Include this job when Dimension 9 is activated at level 2 or 3.
+  # Remove the entire job block when Dimension 9 is skipped.
   version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Validate semver
         run: |
           VERSION=$(${VERSION_EXTRACT_CMD})

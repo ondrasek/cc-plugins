@@ -13,7 +13,13 @@
 #   - Structured output: check name, command, tool output, hint, action directive
 
 INPUT=$(cat)
-FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.filePath // empty')
+
+# Parse file path — prefer jq, fall back to grep+sed for environments without jq
+if command -v jq &>/dev/null; then
+    FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.filePath // empty')
+else
+    FILE_PATH=$(echo "$INPUT" | grep -oE '"(file_path|filePath)"\s*:\s*"[^"]*"' | head -1 | sed 's/.*: *"//;s/"$//')
+fi
 
 # Only process Go files
 if [[ -z "$FILE_PATH" ]] || [[ "$FILE_PATH" != *.go ]]; then
@@ -41,26 +47,42 @@ fail() {
     exit 2
 }
 
+# Helper: resolve tool command — prefer go tool when tool directives exist,
+# fall back to standalone binary.
+resolve_tool() {
+    local tool="$1"
+    if go tool "$tool" --help &>/dev/null 2>&1; then
+        echo "go tool $tool"
+    elif command -v "$tool" &>/dev/null; then
+        echo "$tool"
+    else
+        echo ""
+    fi
+}
+
 # 1. gofumpt (strict superset of gofmt) — format the file
-if command -v gofumpt &>/dev/null; then
-    FMT_OUTPUT=$(gofumpt -w "$FILE_PATH" 2>&1)
+GOFUMPT_CMD=$(resolve_tool gofumpt)
+GOFMT_CMD=$(resolve_tool gofmt)
+if [ -n "$GOFUMPT_CMD" ]; then
+    FMT_OUTPUT=$($GOFUMPT_CMD -w "$FILE_PATH" 2>&1)
     if [ $? -ne 0 ]; then
-        fail "gofumpt" "gofumpt -w $FILE_PATH" "$FMT_OUTPUT" \
+        fail "gofumpt" "$GOFUMPT_CMD -w $FILE_PATH" "$FMT_OUTPUT" \
             "gofumpt failed — this usually means a syntax error prevents formatting. Read the file at the reported line and fix the syntax error first."
     fi
-elif command -v gofmt &>/dev/null; then
-    FMT_OUTPUT=$(gofmt -w "$FILE_PATH" 2>&1)
+elif [ -n "$GOFMT_CMD" ]; then
+    FMT_OUTPUT=$($GOFMT_CMD -w "$FILE_PATH" 2>&1)
     if [ $? -ne 0 ]; then
-        fail "gofmt" "gofmt -w $FILE_PATH" "$FMT_OUTPUT" \
+        fail "gofmt" "$GOFMT_CMD -w $FILE_PATH" "$FMT_OUTPUT" \
             "gofmt failed — this usually means a syntax error prevents formatting. Read the file at the reported line and fix the syntax error first."
     fi
 fi
 
 # 2. goimports — fix imports
-if command -v goimports &>/dev/null; then
-    IMP_OUTPUT=$(goimports -w "$FILE_PATH" 2>&1)
+GOIMPORTS_CMD=$(resolve_tool goimports)
+if [ -n "$GOIMPORTS_CMD" ]; then
+    IMP_OUTPUT=$($GOIMPORTS_CMD -w "$FILE_PATH" 2>&1)
     if [ $? -ne 0 ]; then
-        fail "goimports" "goimports -w $FILE_PATH" "$IMP_OUTPUT" \
+        fail "goimports" "$GOIMPORTS_CMD -w $FILE_PATH" "$IMP_OUTPUT" \
             "goimports failed. Read the file and check for syntax errors or unresolvable import paths."
     fi
 fi

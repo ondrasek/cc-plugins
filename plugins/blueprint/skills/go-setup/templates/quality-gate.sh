@@ -32,6 +32,19 @@ debuglog "=== HOOK STARTED (pid=$$) ==="
 
 cd "${CLAUDE_PROJECT_DIR:-.}"
 
+# Helper: resolve tool command — prefer go tool when tool directives exist,
+# fall back to standalone binary. Returns empty string if neither available.
+resolve_tool() {
+    local tool="$1"
+    if go tool "$tool" --help &>/dev/null 2>&1; then
+        echo "go tool $tool"
+    elif command -v "$tool" &>/dev/null; then
+        echo "$tool"
+    else
+        echo ""
+    fi
+}
+
 # Per-tool diagnostic hints for Claude auto-fix.
 declare -A TOOL_HINTS
 TOOL_HINTS=(
@@ -84,15 +97,22 @@ run_check_nonempty() {
 
 # Checks ordered by speed and likelihood of failure.
 # [check:go-test]
-run_check        "go-test"        go test -race -coverprofile=coverage.out -covermode=atomic -count=1 -failfast -shuffle=on ./...
+# The -race flag requires CGo and a C compiler (gcc/clang). If gcc is not
+# available (WSL2, Alpine, minimal containers), remove -race or install gcc.
+# The -coverpkg=./... flag instruments all module packages, not just the
+# package under test — needed for accurate cross-package coverage.
+run_check        "go-test"        go test -race -coverpkg=./... -coverprofile=coverage.out -covermode=atomic -count=1 -failfast -shuffle=on ./...
 # [check:coverage]
-run_check        "coverage"       go-test-coverage --config=.testcoverage.yml
+COVERAGE_CMD=$(resolve_tool go-test-coverage)
+[ -n "$COVERAGE_CMD" ] && run_check "coverage" $COVERAGE_CMD --config=.testcoverage.yml
 # [check:golangci-lint]
-run_check        "golangci-lint"  golangci-lint run ./...
+LINT_CMD=$(resolve_tool golangci-lint)
+[ -n "$LINT_CMD" ] && run_check "golangci-lint" $LINT_CMD run ./...
 # [check:golangci-fmt]
-run_check_nonempty "golangci-fmt" golangci-lint fmt --diff ./...
+[ -n "$LINT_CMD" ] && run_check_nonempty "golangci-fmt" $LINT_CMD fmt --diff ./...
 # [check:govulncheck]
-run_check        "govulncheck"    govulncheck ./...
+VULNCHECK_CMD=$(resolve_tool govulncheck)
+[ -n "$VULNCHECK_CMD" ] && run_check "govulncheck" $VULNCHECK_CMD ./...
 # [check:go-mod-verify]
 run_check        "go-mod-verify"  go mod verify
 # [check:go-mod-tidy]

@@ -32,7 +32,7 @@ Follow the 6-phase workflow from `setup-workflow.md`.
 
 ### Phase 1: Analyze
 
-Follow `analysis-checklist.md` systematically: Go version, project structure, build constraints (CGo, tags), frameworks, existing tools (check for golangci-lint v1 vs v2), CI, maturity.
+Follow `analysis-checklist.md` systematically: Go version, project structure, build constraints (CGo, tags), frameworks, existing tools (check for golangci-lint v1 vs v2), CI, maturity. **Also check host environment**: is `gcc` available? (needed for `-race` flag even in pure-Go projects).
 
 ### Phase 2: Plan
 
@@ -52,7 +52,11 @@ Present complete plan and wait for approval.
 Read each template in `templates/` for the structural pattern, substitute the researched tools. Install required tools:
 - Binary install for golangci-lint (NOT `go install`)
 - `go install` for gotestsum, go-test-coverage, govulncheck, gofumpt, goimports, deadcode
-- Or use `go.mod` tool directives for Go 1.24+
+- Or use `go.mod` tool directives for Go 1.24+ — if adding tool directives via `go get -tool`, **run `go mod tidy` immediately after** to clean up transitive dependencies
+
+After writing `.golangci.yml`, run a **dry-run lint check** (`golangci-lint run --fix=false ./...`) to catch config errors (invalid linter flags, unknown settings) before proceeding. Fix any config issues before Phase 4.
+
+Add `.gitignore` entries for generated artifacts — see `templates/gitignore-entries.txt`.
 
 ### Phase 4: Review
 
@@ -73,5 +77,7 @@ Structured summary: configured dimensions, files created/modified, quality gate 
 **CGo build failures in CI**: Set `CGO_ENABLED=0` for pure-Go projects. If CGo is required, ensure CI has C compiler toolchain.
 
 **Workspace (go.work) projects**: golangci-lint must run per-module. Generate a loop in quality-gate.sh and CI.
+
+**Race detector fails (gcc not found)**: The `-race` flag requires CGo and a C compiler. On WSL2, Alpine, or minimal containers without gcc, either install `gcc` (`apt install build-essential`) or remove `-race` from quality-gate.sh and CI. The setup skill should detect this in Phase 1 and warn.
 
 **Coverage includes test files**: Use `-coverpkg=./...` to control which packages are instrumented.
