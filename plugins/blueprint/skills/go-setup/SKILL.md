@@ -3,7 +3,7 @@ name: go-setup
 description: Analyzes a Go project and configures 9-dimension quality methodology including hooks, CI, and tool configs. Use when user says "set up quality tools", "configure linting", "add CI pipeline", "go quality", or wants to apply coding standards to a Go project.
 metadata:
   version: 1.0.0
-  author: Ondrej (Ondra) Krajicek, me@ondrejkrajicek.com
+  author: Tomas (Tom) Grbalik, tomas.grbalik@gmail.com & Anthropic Opus
 ---
 
 # Go Setup

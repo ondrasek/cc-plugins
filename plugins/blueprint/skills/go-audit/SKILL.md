@@ -3,7 +3,7 @@ name: go-audit
 description: Read-only gap analysis comparing a Go project's current quality setup against the 9-dimension methodology. Use when user says "audit quality", "check coverage gaps", "what's missing", or wants to see how their Go project measures up before running setup.
 metadata:
   version: 1.0.0
-  author: Ondrej (Ondra) Krajicek, me@ondrejkrajicek.com
+  author: Tomas (Tom) Grbalik, tomas.grbalik@gmail.com & Anthropic Opus
 ---
 
 # Go Audit

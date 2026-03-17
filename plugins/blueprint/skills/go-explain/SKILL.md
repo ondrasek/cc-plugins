@@ -3,7 +3,7 @@ name: go-explain
 description: Answers questions about the Go quality methodology — why tools are chosen, how thresholds work, what each dimension covers, and how hooks interact. Use when user asks "why this tool", "what does the quality gate do", "how are thresholds set", or any Go methodology question.
 metadata:
   version: 1.0.0
-  author: Ondrej (Ondra) Krajicek, me@ondrejkrajicek.com
+  author: Tomas (Tom) Grbalik, tomas.grbalik@gmail.com & Anthropic Opus
 ---
 
 # Go Explain
