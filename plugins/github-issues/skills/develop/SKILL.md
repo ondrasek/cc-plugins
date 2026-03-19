@@ -11,6 +11,7 @@ Bridges issue tracking and development workflow. Creates branches, manages work 
 
 - **Read cross-cutting behaviors first**: `skills/shared/references/cross-cutting.md`
 - **Always view the issue first** before starting development
+- **Worktree reuse**: If already in a git worktree (e.g., `claude -w`), do NOT create a new branch — rename the current branch to match the issue and continue
 - **Check working tree** for uncommitted changes before switching branches
 - **Add a comment** to the issue when starting development
 - **Self-assign** the issue when starting work (if not already assigned)
@@ -37,6 +38,23 @@ Begin work on an issue: view it, create a branch, assign, and comment.
    Verify the issue is open. If closed, ask the user if they want to reopen it.
 
 1b. **Readiness review** — delegate to the `issue-reviewer` agent to verify the issue has acceptance criteria and proper labels before starting development. Present the review results to the user. If the review fails, suggest refining the issue first using the refine skill.
+
+1c. **Detect worktree** — check if already inside a git worktree:
+   ```bash
+   if [ "$(git rev-parse --git-dir)" != "$(git rev-parse --git-common-dir)" ]; then
+     echo "Inside a worktree"
+   fi
+   ```
+   If in a worktree: **skip steps 2-4** entirely. The current branch IS the development branch. Rename it to follow the `NUMBER-slug` convention if it doesn't already match:
+   ```bash
+   # Only rename if current branch doesn't match NUMBER-* pattern
+   CURRENT=$(git branch --show-current)
+   TARGET="NUMBER-slugified-title"
+   if [ "$CURRENT" != "$TARGET" ]; then
+     git branch -m "$TARGET"
+   fi
+   ```
+   Then continue directly to step 5.
 
 2. **Check working tree**:
    ```bash
@@ -143,3 +161,6 @@ When creating branches manually (fallback):
 
 **Issue is closed**:
 - Ask the user if they want to reopen the issue before starting development, or if they want to work on it without reopening.
+
+**Already in a worktree (e.g., `claude -w`)**:
+- The skill detects worktrees automatically. It renames the current branch to `NUMBER-slug` format and skips branch creation. All hooks (session-start, commit-reference-check) work normally since they key off branch naming.
