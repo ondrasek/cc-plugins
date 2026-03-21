@@ -8,6 +8,7 @@
 
 HOOK_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/hook-debug.log"
 WORKTREE_ID="$(basename "${CLAUDE_PROJECT_DIR:-.}")"
+mkdir -p "$(dirname "$HOOK_LOG")"
 debuglog() {
     echo "[auto-commit@${WORKTREE_ID}] $(date '+%Y-%m-%d %H:%M:%S') $1" >> "$HOOK_LOG"
 }

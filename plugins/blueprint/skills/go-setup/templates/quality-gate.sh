@@ -25,6 +25,7 @@ set -o pipefail
 
 HOOK_LOG="${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/hook-debug.log"
 WORKTREE_ID="$(basename "${CLAUDE_PROJECT_DIR:-.}")"
+mkdir -p "$(dirname "$HOOK_LOG")"
 debuglog() {
     echo "[quality-gate@${WORKTREE_ID}] $(date '+%Y-%m-%d %H:%M:%S') $1" >> "$HOOK_LOG"
 }
@@ -123,7 +124,12 @@ run_check_nonempty "go-mod-tidy"  go mod tidy -diff
 # run_check_nonempty "deadcode"   deadcode -filter=${MODULE_PATH} -test ./...
 
 # [check:semver-format]
+# Guard: skip when Dimension 9 is disabled (VERSION_EXTRACT_CMD not substituted)
+if [ -n "${VERSION_EXTRACT_CMD:-}" ] && ! echo "${VERSION_EXTRACT_CMD}" | grep -qF '$'; then
 CURRENT_VERSION=$(${VERSION_EXTRACT_CMD} 2>/dev/null)
+else
+CURRENT_VERSION=""
+fi
 if [ -n "$CURRENT_VERSION" ]; then
     SEMVER_RE='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-([0-9A-Za-z-]+\.)*[0-9A-Za-z-]+)?(\+([0-9A-Za-z-]+\.)*[0-9A-Za-z-]+)?$'
     if ! echo "$CURRENT_VERSION" | grep -qE "$SEMVER_RE"; then

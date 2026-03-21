@@ -24,7 +24,10 @@ set -euo pipefail
 # Read tool input from stdin
 INPUT="$(cat)"
 
-# Extract the command that was run
+# Extract the command that was run (requires jq)
+if ! command -v jq &>/dev/null; then
+  exit 0  # jq not installed — skip check rather than blocking commits
+fi
 COMMAND="$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)"
 if [ -z "$COMMAND" ]; then
   exit 0
