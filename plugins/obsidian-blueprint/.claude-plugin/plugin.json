@@ -1,6 +1,6 @@
 {
   "name": "obsidian-blueprint",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Quality methodology for git-managed Obsidian vaults — analyzes vault structure and configures 7 dimensions of content quality",
   "author": {
     "name": "Ondrej (Ondra) Krajicek",
