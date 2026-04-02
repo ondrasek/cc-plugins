@@ -53,12 +53,13 @@ fail() {
 # 1. YAML frontmatter validity and required fields (using yq)
 FIRST_LINE=$(head -1 "$FILE_PATH")
 if [[ "$FIRST_LINE" == "---" ]]; then
-    CLOSING=$(sed -n '2,$ { /^---$/= }' "$FILE_PATH" | head -1)
-    if [[ -z "$CLOSING" ]]; then
+    CLOSING_REL=$(tail -n +2 "$FILE_PATH" | grep -n '^---$' | head -1 | cut -d: -f1)
+    if [[ -z "$CLOSING_REL" ]]; then
         fail "frontmatter" "frontmatter delimiter check" \
             "${FILE_PATH}: unclosed frontmatter (missing closing ---)" \
             "Add a closing '---' line after the frontmatter YAML block."
     fi
+    CLOSING=$((CLOSING_REL + 1))  # adjust for tail -n +2 offset
 
     FRONTMATTER=$(sed -n "2,$((CLOSING - 1))p" "$FILE_PATH")
     if [[ -n "$FRONTMATTER" ]]; then

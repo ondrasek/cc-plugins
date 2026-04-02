@@ -49,11 +49,12 @@ jobs:
               ERRORS="${ERRORS}${file}: missing frontmatter\n"
               continue
             fi
-            CLOSING=$(sed -n '2,$ { /^---$/= }' "$file" | head -1)
-            if [[ -z "$CLOSING" ]]; then
+            CLOSING_REL=$(tail -n +2 "$file" | grep -n '^---$' | head -1 | cut -d: -f1)
+            if [[ -z "$CLOSING_REL" ]]; then
               ERRORS="${ERRORS}${file}: unclosed frontmatter\n"
               continue
             fi
+            CLOSING=$((CLOSING_REL + 1))  # adjust for tail -n +2 offset
             FM=$(sed -n "2,$((CLOSING - 1))p" "$file")
             if ! echo "$FM" | yq '.' > /dev/null 2>&1; then
               ERRORS="${ERRORS}${file}: invalid YAML in frontmatter\n"

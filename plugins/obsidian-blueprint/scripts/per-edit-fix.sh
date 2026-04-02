@@ -39,12 +39,13 @@ fail() {
 FIRST_LINE=$(head -1 "$FILE_PATH")
 if [[ "$FIRST_LINE" == "---" ]]; then
     # Check for closing delimiter
-    CLOSING=$(sed -n '2,$ { /^---$/= }' "$FILE_PATH" | head -1)
-    if [[ -z "$CLOSING" ]]; then
+    CLOSING_REL=$(tail -n +2 "$FILE_PATH" | grep -n '^---$' | head -1 | cut -d: -f1)
+    if [[ -z "$CLOSING_REL" ]]; then
         fail "frontmatter" "frontmatter delimiter check" \
             "${FILE_PATH}: missing closing '---' delimiter. The file starts with frontmatter but has no closing delimiter." \
             "Add a closing '---' line after the frontmatter YAML block."
     fi
+    CLOSING=$((CLOSING_REL + 1))  # adjust for tail -n +2 offset
 
     # Extract frontmatter content (between first and second ---)
     FRONTMATTER=$(sed -n "2,$((CLOSING - 1))p" "$FILE_PATH")
