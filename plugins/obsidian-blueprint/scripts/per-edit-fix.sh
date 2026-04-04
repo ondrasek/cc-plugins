@@ -14,6 +14,10 @@ fi
 if [[ "$FILE_PATH" == */.obsidian/* ]]; then
     exit 0
 fi
+# Skip folders whose name starts with ! (e.g., "!templates", "!archive")
+if [[ "$FILE_PATH" == */!* ]]; then
+    exit 0
+fi
 if [[ ! -f "$FILE_PATH" ]]; then
     exit 0
 fi

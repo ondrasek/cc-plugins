@@ -33,6 +33,10 @@ fi
 if [[ "$FILE_PATH" == */.obsidian/* ]]; then
     exit 0
 fi
+# Skip folders whose name starts with ! (e.g., "!templates", "!archive")
+if [[ "$FILE_PATH" == */!* ]]; then
+    exit 0
+fi
 
 fail() {
     local name="$1" cmd="$2" output="$3" hint="$4"
