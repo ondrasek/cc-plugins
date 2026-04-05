@@ -37,6 +37,10 @@ fi
 if [[ "$FILE_PATH" == */!* ]]; then
     exit 0
 fi
+# Skip template files (may contain placeholders that fail YAML validation)
+if [[ "$(basename "$FILE_PATH")" == "TEMPLATE.md" ]]; then
+    exit 0
+fi
 
 fail() {
     local name="$1" cmd="$2" output="$3" hint="$4"

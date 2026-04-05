@@ -18,6 +18,10 @@ fi
 if [[ "$FILE_PATH" == */!* ]]; then
     exit 0
 fi
+# Skip template files (may contain placeholders that fail YAML validation)
+if [[ "$(basename "$FILE_PATH")" == "TEMPLATE.md" ]]; then
+    exit 0
+fi
 if [[ ! -f "$FILE_PATH" ]]; then
     exit 0
 fi
