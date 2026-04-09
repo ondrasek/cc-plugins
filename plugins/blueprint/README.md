@@ -1,8 +1,8 @@
 # blueprint
 
-A Claude Code plugin that intelligently applies quality methodology to Python, .NET, Rust, and Neovim Lua projects. Rather than copying config files, it analyzes your project's ecosystem, researches current best tools, and configures hooks and CI to match.
+A Claude Code plugin that intelligently applies quality methodology to Python, .NET, Rust, Go, and Neovim Lua projects. Rather than copying config files, it analyzes your project's ecosystem, researches current best tools, and configures hooks and CI to match.
 
-## Skills (16)
+## Skills (20)
 
 Four skills per supported language:
 
@@ -20,6 +20,10 @@ Four skills per supported language:
 | `/blueprint:rust-audit` | Read-only gap analysis for Rust projects |
 | `/blueprint:rust-update` | Incremental methodology updates for Rust projects |
 | `/blueprint:rust-explain` | Q&A about the Rust quality methodology |
+| `/blueprint:go-setup` | Analyze and configure quality tooling for a Go project |
+| `/blueprint:go-audit` | Read-only gap analysis for Go projects |
+| `/blueprint:go-update` | Incremental methodology updates for Go projects |
+| `/blueprint:go-explain` | Q&A about the Go quality methodology |
 | `/blueprint:nvim-lua-setup` | Analyze and configure quality tooling for a Neovim Lua plugin |
 | `/blueprint:nvim-lua-audit` | Read-only gap analysis for Neovim Lua plugins |
 | `/blueprint:nvim-lua-update` | Incremental methodology updates for Neovim Lua plugins |
@@ -59,6 +63,7 @@ The plugin registers a per-edit auto-format hook that routes by file extension:
 - `.py` — ruff lint+format, codespell
 - `.cs` — dotnet format
 - `.rs` — cargo fmt
+- `.go` — gofumpt, goimports
 - `.lua` — stylua
 
 Other file types are silently ignored.
@@ -79,6 +84,8 @@ skills/
   dotnet-audit/, dotnet-update/, dotnet-explain/
   rust-setup/                       — Rust setup skill + references + templates
   rust-audit/, rust-update/, rust-explain/
+  go-setup/                         — Go setup skill + references + templates
+  go-audit/, go-update/, go-explain/
   nvim-lua-setup/                   — Neovim Lua setup skill + references + templates
   nvim-lua-audit/, nvim-lua-update/, nvim-lua-explain/
 ```

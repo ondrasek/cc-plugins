@@ -1,6 +1,6 @@
 #!/bin/bash
 # Plugin-level per-edit hook: routes auto-fixers by file extension.
-# Supports Python (.py), C# (.cs), Rust (.rs), and Lua (.lua) files.
+# Supports Python (.py), C# (.cs), Rust (.rs), Go (.go), and Lua (.lua) files.
 # Uses ${CLAUDE_PLUGIN_ROOT} for plugin-relative path resolution.
 #
 # Triggered by PostToolUse on Edit|Write
@@ -118,6 +118,31 @@ case "$FILE_PATH" in
             if [ $? -ne 0 ]; then
                 fail "cargo-fmt" "cargo fmt -- $FILE_PATH" "$FMT_OUTPUT" \
                     "cargo fmt failed — this usually means a syntax error prevents formatting. Read the file at the reported line and fix the syntax error first."
+            fi
+        fi
+        ;;
+
+    *.go)
+        # --- Go: gofumpt + goimports ---
+        if command -v gofumpt &>/dev/null; then
+            FMT_OUTPUT=$(gofumpt -w "$FILE_PATH" 2>&1)
+            if [ $? -ne 0 ]; then
+                fail "gofumpt" "gofumpt -w $FILE_PATH" "$FMT_OUTPUT" \
+                    "gofumpt failed — this usually means a syntax error prevents formatting. Read the file at the reported line and fix the syntax error first."
+            fi
+        elif command -v gofmt &>/dev/null; then
+            FMT_OUTPUT=$(gofmt -w "$FILE_PATH" 2>&1)
+            if [ $? -ne 0 ]; then
+                fail "gofmt" "gofmt -w $FILE_PATH" "$FMT_OUTPUT" \
+                    "gofmt failed — this usually means a syntax error prevents formatting. Read the file at the reported line and fix the syntax error first."
+            fi
+        fi
+
+        if command -v goimports &>/dev/null; then
+            IMP_OUTPUT=$(goimports -w "$FILE_PATH" 2>&1)
+            if [ $? -ne 0 ]; then
+                fail "goimports" "goimports -w $FILE_PATH" "$IMP_OUTPUT" \
+                    "goimports failed. Read the file and check for syntax errors or unresolvable import paths."
             fi
         fi
         ;;
