@@ -146,7 +146,7 @@ claude --plugin-dir /path/to/cc-plugins/plugins/blueprint
 
 Branch convention: `<issue-number>-<description>` (e.g., `42-fix-bug` → issue #42). Non-matching branches are silently ignored.
 
-### Skills (8)
+### Skills (9)
 
 1. **triage** — read-only querying, viewing, and status dashboard
 2. **manage** — CRUD lifecycle, batch operations, label management
@@ -154,8 +154,9 @@ Branch convention: `<issue-number>-<description>` (e.g., `42-fix-bug` → issue 
 4. **create** — research-driven issue creation with immediate refinement
 5. **develop** — issue → branch → PR workflow bridge
 6. **review-pr** — shepherd a PR through CI checks and code review to merge (uses GraphQL for review threads)
-7. **recommend** — analyze open issues against codebase activity, severity, and trends to suggest what to work on next
-8. **organize** — lock, unlock, pin, unpin, transfer
+7. **copilot-loop** — stage/commit/push → open or update PR with Copilot reviewer → poll for review → address comments → re-request → iterate to clean (gh ≥ 2.88.0 with `--reviewer @copilot`, GraphQL `requestReviews` mutation as fallback)
+8. **recommend** — analyze open issues against codebase activity, severity, and trends to suggest what to work on next
+9. **organize** — lock, unlock, pin, unpin, transfer
 
 ## calendar-access Plugin
 

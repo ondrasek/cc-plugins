@@ -20,6 +20,7 @@ Gives Claude Code natural language access to GitHub issues — querying, creatin
 | **create** | "create issue", "new issue", "file a bug", "report a problem" | Research-driven issue creation with immediate refinement |
 | **develop** | "start working on issue #42", "create a branch" | Bridge issues to development workflow |
 | **review-pr** | "review my PR", "fix CI", "address review comments", "get this PR merged" | Shepherd a PR through CI checks and code review to merge |
+| **copilot-loop** | "copilot review loop", "iterate with copilot", "loop until copilot is happy" | Stage/commit/push, open or update PR with Copilot reviewer, poll for review, address comments, re-request, iterate to clean |
 | **recommend** | "what should I work on", "recommend an issue", "pick my next task" | Analyze issues against codebase activity, severity, and trends to suggest what to tackle next |
 | **organize** | "lock issue", "pin this", "transfer to another repo" | Administrative operations |
 
