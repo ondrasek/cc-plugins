@@ -1,0 +1,8 @@
+# Entries to append to .gitignore during setup.
+# The setup skill should check each line and only add entries not already present.
+
+# Quality gate artifacts
+coverage.out
+
+# Claude Code hook debug logs
+.claude/hooks/hook-debug.log
